@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   Search,
   Bell,
@@ -28,14 +29,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface TopbarAppProps {
-  onMenuClick?: () => void;
+interface UserData {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  subscriptionStatus?: string | null;
 }
 
-export function TopbarApp({ onMenuClick }: TopbarAppProps) {
+interface TopbarAppProps {
+  onMenuClick?: () => void;
+  user?: UserData;
+}
+
+export function TopbarApp({ onMenuClick, user }: TopbarAppProps) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [searchOpen, setSearchOpen] = React.useState(false);
+
+  const displayName = user?.name || user?.email?.split("@")[0] || "Usuario";
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/" });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
@@ -125,17 +146,17 @@ export function TopbarApp({ onMenuClick }: TopbarAppProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src="/avatars/user.jpg" alt="Usuario" />
-                <AvatarFallback>VA</AvatarFallback>
+                {user?.image && <AvatarImage src={user.image} alt={displayName} />}
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Usuario Demo</p>
+                <p className="text-sm font-medium leading-none">{displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  usuario@demo.com
+                  {user?.email || ""}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -147,21 +168,21 @@ export function TopbarApp({ onMenuClick }: TopbarAppProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/app/billing">
+              <Link href="/app/membresia">
                 <CreditCard className="mr-2 h-4 w-4" />
                 Membresía
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/app/perfil#settings">
+              <Link href="/app/perfil/editar">
                 <Settings className="mr-2 h-4 w-4" />
                 Ajustes
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => router.push("/auth/login")}
+              className="text-destructive focus:text-destructive cursor-pointer"
+              onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Cerrar sesión
