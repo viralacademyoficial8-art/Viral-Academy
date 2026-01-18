@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getCourseBySlug } from "@/lib/data";
 import { CourseDetailClient } from "./course-detail-client";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
