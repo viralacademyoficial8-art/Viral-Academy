@@ -3,25 +3,48 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { studentSidebarNav, type NavSection } from "@/config/navigation";
+
+interface UserData {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  subscriptionStatus?: string | null;
+}
 
 interface SidebarAppProps {
   navigation?: NavSection[];
+  user?: UserData;
 }
 
-export function SidebarApp({ navigation = studentSidebarNav }: SidebarAppProps) {
+export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
+
+  const displayName = user?.name || user?.email?.split("@")[0] || "Usuario";
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/" });
+  };
 
   return (
     <aside
@@ -115,7 +138,7 @@ export function SidebarApp({ navigation = studentSidebarNav }: SidebarAppProps) 
         </ScrollArea>
 
         {/* User Section */}
-        <div className="border-t border-sidebar-border p-4">
+        <div className="border-t border-sidebar-border p-4 space-y-2">
           <Link
             href="/app/perfil"
             className={cn(
@@ -123,18 +146,31 @@ export function SidebarApp({ navigation = studentSidebarNav }: SidebarAppProps) 
               collapsed && "justify-center px-2"
             )}
           >
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium flex-shrink-0">
-              VA
-            </div>
+            <Avatar className="h-9 w-9 flex-shrink-0">
+              {user?.image && <AvatarImage src={user.image} alt={displayName} />}
+              <AvatarFallback className="text-sm">{initials}</AvatarFallback>
+            </Avatar>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Usuario Demo</p>
+                <p className="text-sm font-medium truncate">{displayName}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  Membresía activa
+                  {user?.subscriptionStatus === "ACTIVE" ? "Membresía activa" : "Sin membresía"}
                 </p>
               </div>
             )}
           </Link>
+          <Button
+            variant="ghost"
+            size={collapsed ? "icon" : "default"}
+            className={cn(
+              "w-full text-muted-foreground hover:text-foreground",
+              collapsed && "px-2"
+            )}
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
+            {!collapsed && <span className="ml-2">Cerrar sesión</span>}
+          </Button>
         </div>
       </div>
     </aside>
