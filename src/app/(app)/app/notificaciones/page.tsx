@@ -1,12 +1,14 @@
+import { redirect } from "next/navigation";
 import { Bell, BookOpen, Video, MessageCircle, Award, CreditCard, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { auth } from "@/lib/auth";
+import { getUserNotifications } from "@/lib/data";
 
-// TODO: Get user notifications when auth is ready
-// import { getUserNotifications } from "@/lib/data";
+export const dynamic = "force-dynamic";
 
 const NOTIFICATION_ICONS: Record<string, React.ReactNode> = {
   SYSTEM: <Bell className="w-5 h-5" />,
@@ -27,45 +29,13 @@ const NOTIFICATION_COLORS: Record<string, string> = {
 };
 
 export default async function NotificacionesPage() {
-  // Mock data until auth is ready
-  const notifications: {
-    id: string;
-    type: string;
-    title: string;
-    message: string;
-    link: string | null;
-    read: boolean;
-    createdAt: string;
-  }[] = [
-    {
-      id: "1",
-      type: "LIVE",
-      title: "Lunes Sublimes en 1 hora",
-      message: "La sesión de mentalidad con Susy Ponce comienza pronto.",
-      link: "/app/lives",
-      read: false,
-      createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    },
-    {
-      id: "2",
-      type: "COURSE",
-      title: "Nuevo módulo disponible",
-      message: "Se ha añadido el módulo 'Google Ads Avanzado' al curso de Marketing Digital.",
-      link: "/app/cursos/marketing-digital-desde-cero",
-      read: false,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    },
-    {
-      id: "3",
-      type: "COMMUNITY",
-      title: "Respuesta a tu pregunta",
-      message: "Leonardo respondió a tu publicación en la comunidad.",
-      link: "/app/comunidad",
-      read: true,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    },
-  ];
+  const session = await auth();
 
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
+  const notifications = await getUserNotifications(session.user.id, 50);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (

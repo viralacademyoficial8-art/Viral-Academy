@@ -1,41 +1,34 @@
+import { redirect } from "next/navigation";
 import { User, Mail, Calendar, Award, BookOpen, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { getUserById, getUserStats } from "@/lib/data";
 
-// TODO: Get user data when auth is ready
-// import { getUserById, getUserStats } from "@/lib/data";
+export const dynamic = "force-dynamic";
 
 export default async function PerfilPage() {
-  // Mock data until auth is ready
-  const user = {
-    id: "demo",
-    email: "estudiante@demo.com",
-    role: "STUDENT",
-    createdAt: new Date().toISOString(),
-    profile: {
-      firstName: "Usuario",
-      lastName: "Demo",
-      displayName: "Usuario Demo",
-      bio: "Aprendiendo marketing digital para hacer crecer mi negocio.",
-      objective: "Aprender marketing",
-      level: "beginner",
-    },
-    subscription: {
-      status: "ACTIVE",
-      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  };
+  const session = await auth();
 
-  const stats = {
-    coursesInProgress: 2,
-    certificates: 0,
-    completedLessons: 5,
-    overallProgress: 35,
-  };
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
+  const [user, stats] = await Promise.all([
+    getUserById(session.user.id),
+    getUserStats(session.user.id),
+  ]);
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  const subscriptionStatus = user.subscription?.status;
+  const isActive = subscriptionStatus === "ACTIVE";
 
   return (
     <div className="space-y-8">
@@ -55,11 +48,15 @@ export default async function PerfilPage() {
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <Avatar className="w-24 h-24 mx-auto">
+                {user.profile?.avatar && (
+                  <AvatarImage src={user.profile.avatar} alt={user.profile.displayName || ""} />
+                )}
                 <AvatarFallback className="text-2xl">
                   {user.profile?.displayName
                     ?.split(" ")
                     .map((n) => n[0])
-                    .join("") || "U"}
+                    .join("")
+                    .toUpperCase() || user.email[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -68,8 +65,8 @@ export default async function PerfilPage() {
                 </h2>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
-              <Badge variant={user.subscription?.status === "ACTIVE" ? "success" : "secondary"}>
-                {user.subscription?.status === "ACTIVE" ? "Membresía Activa" : "Sin membresía"}
+              <Badge variant={isActive ? "default" : "secondary"}>
+                {isActive ? "Membresía Activa" : "Sin membresía"}
               </Badge>
               {user.profile?.bio && (
                 <p className="text-sm text-muted-foreground">{user.profile.bio}</p>
@@ -159,7 +156,11 @@ export default async function PerfilPage() {
                 <div>
                   <p className="text-sm font-medium">Miembro desde</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {new Date(user.createdAt).toLocaleDateString("es-MX", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
                   </p>
                 </div>
               </div>
@@ -169,7 +170,11 @@ export default async function PerfilPage() {
                   <div>
                     <p className="text-sm font-medium">Membresía válida hasta</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(user.subscription.currentPeriodEnd).toLocaleDateString()}
+                      {new Date(user.subscription.currentPeriodEnd).toLocaleDateString("es-MX", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
                     </p>
                   </div>
                 </div>
