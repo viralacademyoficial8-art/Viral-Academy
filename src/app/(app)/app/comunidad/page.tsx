@@ -1,6 +1,8 @@
 import { getCommunityCategories, getPosts } from "@/lib/data";
 import { ComunidadClient } from "./comunidad-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function ComunidadPage() {
   const [categories, posts] = await Promise.all([
     getCommunityCategories(),

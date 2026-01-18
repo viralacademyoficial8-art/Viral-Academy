@@ -1,6 +1,8 @@
 import { getAllLives, getUpcomingLives } from "@/lib/data";
 import { LivesClient } from "./lives-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function LivesPage() {
   const [upcomingLives, allLives] = await Promise.all([
     getUpcomingLives(10),

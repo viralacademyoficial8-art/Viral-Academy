@@ -1,6 +1,8 @@
 import { getReplays } from "@/lib/data";
 import { ReplaysClient } from "./replays-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function ReplaysPage() {
   const replays = await getReplays();
 

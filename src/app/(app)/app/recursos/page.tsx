@@ -1,6 +1,8 @@
 import { getResources } from "@/lib/data";
 import { RecursosClient } from "./recursos-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function RecursosPage() {
   const resources = await getResources();
 
