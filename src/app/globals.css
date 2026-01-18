@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 225 15% 97%;
+    --foreground: 222 47% 11%;
+    --surface-1: 0 0% 100%;
+    --surface-2: 225 14% 96%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 301 73% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 301 73% 40%;
+    --accent: 72 93% 50%;
+    --accent-foreground: 222 47% 11%;
+    --secondary: 225 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 225 14% 96%;
+    --muted-foreground: 222 14% 46%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 14% 90%;
+    --input: 222 14% 90%;
+    --ring: 301 73% 35%;
+    --radius: 0.75rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 301 73% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 225 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 222 14% 90%;
+    --sidebar-ring: 301 73% 35%;
+  }
+
+  .dark {
+    --background: 222 47% 4%;
+    --foreground: 0 0% 95%;
+    --surface-1: 222 47% 6%;
+    --surface-2: 222 41% 10%;
+    --card: 222 47% 6%;
+    --card-foreground: 0 0% 95%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 301 73% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 301 73% 40%;
+    --accent: 72 93% 50%;
+    --accent-foreground: 222 47% 11%;
+    --secondary: 222 41% 10%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 222 41% 10%;
+    --muted-foreground: 0 0% 64%;
+    --destructive: 0 63% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 222 41% 10%;
+    --ring: 301 73% 35%;
+    --sidebar-background: 222 47% 4%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 301 73% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 41% 10%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 100% / 0.08;
+    --sidebar-ring: 301 73% 35%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { @apply scroll-smooth; }
+  body { @apply bg-background text-foreground antialiased; }
+  h1, h2, h3, h4, h5, h6 { @apply font-sans tracking-tight; }
+  ::selection { @apply bg-primary/20 text-foreground; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  *:focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }
+}
+
+@layer components {
+  .glass { @apply bg-surface-1/60 backdrop-blur-md border border-border; }
+  .glass-strong { @apply bg-surface-1/80 backdrop-blur-lg border border-border; }
+  .glow { box-shadow: 0 0 40px -10px rgba(144, 23, 142, 0.3); }
+  .gradient-text { @apply bg-clip-text text-transparent; background-image: linear-gradient(135deg, hsl(301 73% 35%) 0%, hsl(301 73% 40%) 100%); }
+  .card-hover { @apply transition-all duration-200 hover:-translate-y-1; }
+  .btn-primary { @apply text-primary-foreground hover:opacity-90 transition-opacity; background-image: linear-gradient(135deg, hsl(301 73% 35%) 0%, hsl(301 73% 40%) 100%); }
+  .section-padding { @apply py-16 md:py-24 lg:py-32; }
+  .container-wide { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+  .badge-primary { @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20; }
+  .badge-accent { @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20; }
+  .progress-bar { @apply h-2 w-full bg-surface-2 rounded-full overflow-hidden; }
+  .progress-bar-fill { @apply h-full rounded-full transition-all duration-500; background-image: linear-gradient(135deg, hsl(301 73% 35%) 0%, hsl(301 73% 40%) 100%); }
+  .skeleton { @apply animate-pulse bg-surface-2 rounded-lg; }
+  .divider-gradient { @apply h-px w-full; background: linear-gradient(to right, transparent, hsl(var(--border)), transparent); }
+}
+
+@layer utilities {
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .text-balance { text-wrap: balance; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
