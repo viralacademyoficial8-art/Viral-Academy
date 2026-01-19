@@ -67,7 +67,7 @@ export function NavbarPublic() {
               <Link href="/auth/login">Iniciar sesión</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link href="/membresia">Únete ahora</Link>
+              <Link href="/auth/registro">Únete ahora</Link>
             </Button>
           </div>
 
@@ -115,7 +115,7 @@ export function NavbarPublic() {
                   <Link href="/auth/login">Iniciar sesión</Link>
                 </Button>
                 <Button className="w-full" asChild>
-                  <Link href="/membresia">Únete ahora</Link>
+                  <Link href="/auth/registro">Únete ahora</Link>
                 </Button>
               </div>
             </div>
