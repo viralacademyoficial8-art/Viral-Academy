@@ -5,55 +5,68 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { authConfig } from "./auth.config";
+import type { Provider } from "next-auth/providers";
+
+// Build providers array dynamically
+const providers: Provider[] = [];
+
+// Only add Google provider if credentials are available
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    })
+  );
+}
+
+// Always add Credentials provider
+providers.push(
+  Credentials({
+    name: "credentials",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Password", type: "password" },
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials?.password) {
+        throw new Error("Email y contraseña son requeridos");
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { email: credentials.email as string },
+        include: { profile: true },
+      });
+
+      if (!user || !user.password) {
+        throw new Error("Credenciales inválidas");
+      }
+
+      const isPasswordValid = await bcrypt.compare(
+        credentials.password as string,
+        user.password
+      );
+
+      if (!isPasswordValid) {
+        throw new Error("Credenciales inválidas");
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.profile?.displayName || user.profile?.firstName || user.email,
+        image: user.profile?.avatar,
+        role: user.role,
+      };
+    },
+  })
+);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    }),
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email y contraseña son requeridos");
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-          include: { profile: true },
-        });
-
-        if (!user || !user.password) {
-          throw new Error("Credenciales inválidas");
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error("Credenciales inválidas");
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.profile?.displayName || user.profile?.firstName || user.email,
-          image: user.profile?.avatar,
-          role: user.role,
-        };
-      },
-    }),
-  ],
+  providers,
   callbacks: {
     ...authConfig.callbacks,
     async signIn({ user, account }) {

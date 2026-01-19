@@ -93,6 +93,73 @@ export async function getCoursesWithProgress(userId: string) {
   return coursesWithProgress;
 }
 
+export async function getAllCoursesWithUserStatus(userId?: string) {
+  const courses = await prisma.course.findMany({
+    where: { published: true },
+    include: {
+      mentor: {
+        include: { profile: true }
+      },
+      modules: {
+        include: { lessons: true }
+      },
+      _count: {
+        select: { enrollments: true }
+      }
+    },
+    orderBy: [{ featured: "desc" }, { order: "asc" }]
+  });
+
+  if (!userId) {
+    return courses.map(course => ({
+      ...course,
+      enrolled: false,
+      progress: 0
+    }));
+  }
+
+  // Get user's enrollments
+  const enrollments = await prisma.enrollment.findMany({
+    where: { userId },
+    select: { courseId: true }
+  });
+  const enrolledCourseIds = new Set(enrollments.map(e => e.courseId));
+
+  // Get progress for each enrolled course
+  const coursesWithStatus = await Promise.all(
+    courses.map(async (course) => {
+      const isEnrolled = enrolledCourseIds.has(course.id);
+
+      if (!isEnrolled) {
+        return { ...course, enrolled: false, progress: 0 };
+      }
+
+      const totalLessons = course.modules.reduce(
+        (acc, mod) => acc + mod.lessons.length,
+        0
+      );
+
+      const completedLessons = await prisma.lessonProgress.count({
+        where: {
+          userId,
+          completed: true,
+          lesson: {
+            module: { courseId: course.id }
+          }
+        }
+      });
+
+      const progress = totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
+
+      return { ...course, enrolled: true, progress };
+    })
+  );
+
+  return coursesWithStatus;
+}
+
 export async function getUserCourseProgress(userId: string, courseId: string) {
   const course = await prisma.course.findUnique({
     where: { id: courseId },

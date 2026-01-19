@@ -1,10 +1,14 @@
-import { getCourses } from "@/lib/data";
+import { auth } from "@/lib/auth";
+import { getAllCoursesWithUserStatus } from "@/lib/data/courses";
 import { CoursesClient } from "./courses-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function CursosPage() {
-  const courses = await getCourses();
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  const courses = await getAllCoursesWithUserStatus(userId);
 
   const formattedCourses = courses.map((course) => ({
     id: course.id,
@@ -15,8 +19,8 @@ export default async function CursosPage() {
     category: course.category,
     mentor: course.mentor.profile?.displayName || course.mentor.email,
     duration: course.duration || 0,
-    enrolled: false, // TODO: Check enrollment when auth is ready
-    progress: 0, // TODO: Get progress when auth is ready
+    enrolled: course.enrolled,
+    progress: course.progress,
     featured: course.featured,
     thumbnail: course.thumbnail,
   }));
