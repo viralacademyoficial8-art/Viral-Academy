@@ -1,25 +1,21 @@
-import { motion } from "framer-motion";
 import { Award, Download, ExternalLink, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { getUserCertificates } from "@/lib/data/certificates";
 
-// TODO: Get user certificates when auth is ready
-// import { getUserCertificates } from "@/lib/data";
+export const dynamic = "force-dynamic";
 
 export default async function CertificadosPage() {
-  // Mock data until auth is ready
-  const certificates: {
-    id: string;
-    verificationCode: string;
-    issuedAt: string;
-    course: {
-      title: string;
-      slug: string;
-      mentor: { name: string };
-    };
-  }[] = [];
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
+  const certificates = await getUserCertificates(session.user.id);
 
   return (
     <div className="space-y-8">
@@ -54,24 +50,32 @@ export default async function CertificadosPage() {
               <CardContent className="p-5 space-y-4">
                 <div>
                   <h3 className="font-semibold line-clamp-2">{cert.course.title}</h3>
-                  <p className="text-sm text-muted-foreground">{cert.course.mentor.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {cert.course.mentor.profile?.displayName || cert.course.mentor.email}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="w-4 h-4" />
-                  <span>Emitido el {new Date(cert.issuedAt).toLocaleDateString()}</span>
+                  <span>Emitido el {new Date(cert.issuedAt).toLocaleDateString("es-MX")}</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-muted-foreground">Código:</span>
                   <code className="bg-surface-2 px-2 py-0.5 rounded">{cert.verificationCode}</code>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Download className="w-4 h-4 mr-2" />
-                    PDF
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Verificar
+                  {cert.pdfUrl && (
+                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <a href={cert.pdfUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="w-4 h-4 mr-2" />
+                        PDF
+                      </a>
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" className="flex-1" asChild>
+                    <Link href={`/certificados/verificar/${cert.verificationCode}`}>
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Verificar
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
