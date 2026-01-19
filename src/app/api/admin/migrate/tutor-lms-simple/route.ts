@@ -91,6 +91,12 @@ export async function POST(request: NextRequest) {
 
     // Parse CSV
     let records: TutorLMSRow[];
+    let debugInfo = {
+      totalRows: 0,
+      columns: [] as string[],
+      sampleRow: null as Record<string, string> | null,
+      hasRequiredColumns: false,
+    };
 
     try {
       const text = await file.text();
@@ -100,17 +106,73 @@ export async function POST(request: NextRequest) {
         trim: true,
         bom: true,
         relax_column_count: true,
+        delimiter: [",", ";", "\t"], // Try multiple delimiters
       });
+
+      debugInfo.totalRows = records.length;
+      if (records.length > 0) {
+        debugInfo.columns = Object.keys(records[0]);
+        debugInfo.sampleRow = records[0] as unknown as Record<string, string>;
+        debugInfo.hasRequiredColumns =
+          "curso_id" in records[0] ||
+          "ID" in records[0] ||
+          Object.keys(records[0]).some(k => k.toLowerCase().includes("curso"));
+      }
     } catch (parseError) {
       return NextResponse.json({
         success: false,
         message: "Error al parsear el CSV",
         imported: 0,
         errors: [String(parseError)],
+        debug: { parseError: String(parseError) }
+      });
+    }
+
+    // If no records or columns don't match, return debug info
+    if (records.length === 0) {
+      return NextResponse.json({
+        success: false,
+        message: "El archivo CSV está vacío o no tiene el formato correcto",
+        imported: 0,
+        errors: ["No se encontraron filas en el CSV"],
+        debug: debugInfo
       });
     }
 
     const errors: string[] = [];
+
+    // Check if we have the expected columns
+    const firstRow = records[0];
+    const hasCorrectColumns = "curso_id" in firstRow && "curso_titulo" in firstRow;
+
+    if (!hasCorrectColumns) {
+      // Try to map columns if they have different names
+      const columnMapping: Record<string, string> = {};
+      const keys = Object.keys(firstRow);
+
+      // Common phpMyAdmin export variations
+      for (const key of keys) {
+        const lowerKey = key.toLowerCase().trim();
+        if (lowerKey === "id" || lowerKey === "curso_id" || lowerKey.includes("c.id")) {
+          columnMapping[key] = "curso_id";
+        } else if (lowerKey.includes("titulo") || lowerKey.includes("post_title")) {
+          if (!columnMapping[key]) columnMapping[key] = "curso_titulo";
+        }
+      }
+
+      errors.push(`Columnas encontradas: ${keys.join(", ")}`);
+      errors.push(`Columnas esperadas: curso_id, curso_titulo, curso_slug, modulo_id, modulo_titulo, etc.`);
+
+      if (!keys.includes("curso_id")) {
+        return NextResponse.json({
+          success: false,
+          message: "El CSV no tiene las columnas correctas. Asegúrate de exportar con los alias de la query.",
+          imported: 0,
+          errors,
+          debug: debugInfo
+        });
+      }
+    }
 
     // Build courses structure from flat data
     const coursesMap = new Map<string, {
