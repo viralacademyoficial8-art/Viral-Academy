@@ -25,6 +25,11 @@ interface MigrationResult {
     lessons?: number;
   };
   errors: string[];
+  debug?: {
+    totalRows?: number;
+    columns?: string[];
+    sampleRow?: Record<string, string>;
+  };
 }
 
 export default function AdminMigracionPage() {
@@ -179,10 +184,16 @@ WHERE um_role.meta_value LIKE '%customer%'
                 </p>
               </div>
 
-              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                <p className="text-xs">
-                  <strong>Pasos en phpMyAdmin:</strong> Click en tu base de datos → Pestaña "SQL" → Pegar query → "Continuar" → "Exportar" → Formato CSV → "Continuar"
-                </p>
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-semibold">Pasos en phpMyAdmin:</p>
+                <ol className="text-xs list-decimal list-inside space-y-1">
+                  <li>Click en tu base de datos → Pestaña "SQL"</li>
+                  <li>Pegar la query → Click "Continuar"</li>
+                  <li>En los resultados, click "Exportar"</li>
+                  <li><strong className="text-yellow-500">IMPORTANTE:</strong> Formato = CSV</li>
+                  <li><strong className="text-yellow-500">IMPORTANTE:</strong> Marcar ✓ "Poner nombres de columnas en la primera fila"</li>
+                  <li>Click "Continuar" para descargar</li>
+                </ol>
               </div>
             </div>
           </div>
@@ -284,6 +295,23 @@ WHERE um_role.meta_value LIKE '%customer%'
                     <li key={i}>• {err}</li>
                   ))}
                 </ul>
+              )}
+              {results.tutor.debug && (
+                <div className="mt-3 p-3 bg-black/30 rounded text-xs font-mono">
+                  <p className="text-yellow-500 font-semibold mb-2">Debug Info:</p>
+                  <p>Filas encontradas: {results.tutor.debug.totalRows}</p>
+                  {results.tutor.debug.columns && (
+                    <p className="mt-1">Columnas: {results.tutor.debug.columns.join(", ")}</p>
+                  )}
+                  {results.tutor.debug.sampleRow && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-blue-400">Ver primera fila</summary>
+                      <pre className="mt-1 overflow-x-auto">
+                        {JSON.stringify(results.tutor.debug.sampleRow, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
               )}
             </div>
           )}
