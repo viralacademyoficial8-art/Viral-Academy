@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { sendSubscriptionActivatedEmail, sendPaymentFailedEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -102,6 +103,22 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     },
   });
 
+  // Send welcome email
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+
+    if (user) {
+      const name = user.profile?.displayName || user.profile?.firstName || "miembro";
+      await sendSubscriptionActivatedEmail(user.email, name);
+    }
+  } catch (emailError) {
+    console.error("Failed to send subscription email:", emailError);
+    // Don't throw - subscription was still created successfully
+  }
+
   console.log(`Checkout completed for user ${userId}`);
 }
 
@@ -193,6 +210,11 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 
   const existingSubscription = await prisma.subscription.findFirst({
     where: { stripeCustomerId },
+    include: {
+      user: {
+        include: { profile: true },
+      },
+    },
   });
 
   if (!existingSubscription) {
@@ -207,7 +229,14 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     },
   });
 
-  // TODO: Send email notification about failed payment
+  // Send payment failed email
+  try {
+    const user = existingSubscription.user;
+    const name = user.profile?.displayName || user.profile?.firstName || "miembro";
+    await sendPaymentFailedEmail(user.email, name);
+  } catch (emailError) {
+    console.error("Failed to send payment failed email:", emailError);
+  }
 
   console.log(`Payment failed for user ${existingSubscription.userId}`);
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SidebarApp } from "@/components/navigation/sidebar-app";
 import { TopbarApp } from "@/components/navigation/topbar-app";
@@ -12,6 +13,7 @@ interface UserData {
   email?: string | null;
   image?: string | null;
   subscriptionStatus?: string | null;
+  needsOnboarding?: boolean;
 }
 
 interface AppLayoutClientProps {
@@ -21,6 +23,20 @@ interface AppLayoutClientProps {
 
 export function AppLayoutClient({ children, user }: AppLayoutClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Redirect to onboarding if needed (but not if already on onboarding page)
+  React.useEffect(() => {
+    if (user?.needsOnboarding && !pathname.includes("/onboarding")) {
+      router.push("/app/onboarding");
+    }
+  }, [user?.needsOnboarding, pathname, router]);
+
+  // If on onboarding page, render without sidebar/topbar
+  if (pathname.includes("/onboarding")) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
