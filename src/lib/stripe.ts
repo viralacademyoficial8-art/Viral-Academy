@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { siteConfig } from "@/config/site";
 
 // Lazy initialization to avoid errors during build time
 let stripeInstance: Stripe | null = null;
@@ -39,8 +40,8 @@ export const PLANS = {
   MONTHLY: {
     priceId: process.env.STRIPE_PRICE_ID_MONTHLY || "",
     name: "Viral Master Pack",
-    price: 597,
-    currency: "MXN",
+    price: siteConfig.pricing.monthly.price,
+    currency: siteConfig.pricing.monthly.currency,
     interval: "month" as const,
   },
 };

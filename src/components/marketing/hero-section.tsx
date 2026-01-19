@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 
 export function HeroSection() {
   return (
@@ -97,7 +98,7 @@ export function HeroSection() {
               Capacitaciones con equipos de empresas como:
             </p>
             <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-              {["Google", "UTEL", "Startup México", "Tec de Monterrey", "Talent Land"].map((partner) => (
+              {siteConfig.partners.map((partner) => (
                 <span key={partner} className="text-sm font-medium text-muted-foreground">
                   {partner}
                 </span>

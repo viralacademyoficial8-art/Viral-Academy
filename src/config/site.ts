@@ -4,7 +4,7 @@ export const siteConfig = {
   url: process.env.NEXT_PUBLIC_APP_URL || "https://viralacademy.com",
   ogImage: "/og-image.png",
   links: {
-    whatsapp: "https://wa.me/+521XXXXXXXXXX",
+    whatsapp: "https://wa.me/+522281387768",
     instagram: "https://instagram.com/viralacademy",
     youtube: "https://youtube.com/@viralacademy",
     tiktok: "https://tiktok.com/@viralacademy",
@@ -30,6 +30,7 @@ export const siteConfig = {
     students: "+1,500",
     reach: "+100M",
     adSpend: "+$100,000 USD",
+    enterprises: "6+",
   },
   mentors: [
     {

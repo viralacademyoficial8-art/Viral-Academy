@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { siteConfig } from "@/config/site";
 import { AnalyticsClient } from "./analytics-client";
 
 export const dynamic = "force-dynamic";
@@ -119,7 +120,7 @@ async function getAnalyticsData() {
               previousSubscriptions) *
             100
           : 100,
-      mrr: activeSubscriptions * 597,
+      mrr: activeSubscriptions * siteConfig.pricing.monthly.price,
       completionRate:
         totalLessonsStarted > 0
           ? (completedLessons / totalLessonsStarted) * 100

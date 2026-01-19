@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { siteConfig } from "@/config/site";
 
 interface MembresiaClientProps {
   subscription: {
@@ -22,17 +23,6 @@ interface MembresiaClientProps {
     cancelAtPeriodEnd: boolean;
   } | null;
 }
-
-const BENEFITS = [
-  "Acceso a todos los cursos premium",
-  "Lives semanales con Leo y Susy",
-  "Replays de todas las sesiones",
-  "Comunidad exclusiva de alumnos",
-  "Recursos y plantillas descargables",
-  "Certificados de finalización",
-  "Soporte prioritario",
-  "Nuevos cursos cada mes",
-];
 
 export function MembresiaClient({ subscription }: MembresiaClientProps) {
   const searchParams = useSearchParams();
@@ -244,8 +234,8 @@ export function MembresiaClient({ subscription }: MembresiaClientProps) {
           <CardContent className="space-y-6">
             <div className="text-center">
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-4xl font-bold">$597</span>
-                <span className="text-muted-foreground">MXN/mes</span>
+                <span className="text-4xl font-bold">${siteConfig.pricing.monthly.price}</span>
+                <span className="text-muted-foreground">{siteConfig.pricing.monthly.currency}/{siteConfig.pricing.monthly.interval}</span>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
                 Cancela cuando quieras
@@ -253,12 +243,12 @@ export function MembresiaClient({ subscription }: MembresiaClientProps) {
             </div>
 
             <div className="space-y-3">
-              {BENEFITS.map((benefit, index) => (
+              {siteConfig.features.map((feature, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <div className="p-1 rounded-full bg-primary/10">
                     <Check className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="text-sm">{benefit}</span>
+                  <span className="text-sm">{feature}</span>
                 </div>
               ))}
             </div>

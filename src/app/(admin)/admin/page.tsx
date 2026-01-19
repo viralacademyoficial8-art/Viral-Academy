@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { siteConfig } from "@/config/site";
 import { AdminDashboardClient } from "./admin-dashboard-client";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ async function getAdminStats() {
   ]);
 
   // Calculate MRR (Monthly Recurring Revenue)
-  const mrr = activeSubscriptions * 597;
+  const mrr = activeSubscriptions * siteConfig.pricing.monthly.price;
 
   // Get new users this month
   const startOfMonth = new Date();
