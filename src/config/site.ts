@@ -30,6 +30,7 @@ export const siteConfig = {
     students: "+1,500",
     reach: "+100M",
     adSpend: "+$100,000 USD",
+    enterprises: "6+",
   },
   mentors: [
     {

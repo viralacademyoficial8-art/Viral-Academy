@@ -2,26 +2,27 @@
 
 import { motion } from "framer-motion";
 import { Users, Eye, DollarSign, Building2 } from "lucide-react";
+import { siteConfig } from "@/config/site";
 
-const stats = [
+const statsData = [
   {
     icon: Users,
-    value: "+1,500",
+    value: siteConfig.stats.students,
     label: "alumnos formados",
   },
   {
     icon: Eye,
-    value: "+100M",
+    value: siteConfig.stats.reach,
     label: "de personas alcanzadas",
   },
   {
     icon: DollarSign,
-    value: "+$100K USD",
+    value: siteConfig.stats.adSpend,
     label: "gestionados en ads",
   },
   {
     icon: Building2,
-    value: "6+",
+    value: siteConfig.stats.enterprises,
     label: "empresas capacitadas",
   },
 ];
@@ -31,7 +32,7 @@ export function StatsSection() {
     <section className="py-16 md:py-20 border-y border-border bg-surface-1/50">
       <div className="container-wide">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {stats.map((stat, index) => (
+          {statsData.map((stat, index) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
