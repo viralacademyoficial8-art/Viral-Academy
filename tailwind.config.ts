@@ -27,7 +27,7 @@ const config: Config = {
           2: "hsl(var(--surface-2))",
         },
 
-        // Primary - Magenta Premium
+        // Primary - Viral Academy Lime Green #c4f010
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -139,19 +139,21 @@ const config: Config = {
         "30": "7.5rem",
       },
       boxShadow: {
-        glow: "0 0 40px -10px rgba(144, 23, 142, 0.3)",
-        "glow-sm": "0 0 20px -5px rgba(144, 23, 142, 0.2)",
-        card: "0 4px 30px -4px rgba(0, 0, 0, 0.3)",
-        "card-hover": "0 8px 40px -4px rgba(0, 0, 0, 0.4)",
+        // Viral Academy Lime Green glow effects
+        glow: "0 0 40px -10px rgba(196, 240, 16, 0.4)",
+        "glow-sm": "0 0 20px -5px rgba(196, 240, 16, 0.3)",
+        "glow-lg": "0 0 60px -10px rgba(196, 240, 16, 0.5)",
+        card: "0 4px 30px -4px rgba(0, 0, 0, 0.5)",
+        "card-hover": "0 8px 40px -4px rgba(196, 240, 16, 0.2)",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-primary":
-          "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-hover)) 100%)",
+          "linear-gradient(135deg, #c4f010 0%, #a8d00d 100%)",
         "gradient-glow":
-          "radial-gradient(circle at center, rgba(144, 23, 142, 0.15) 0%, transparent 60%)",
+          "radial-gradient(circle at center, rgba(196, 240, 16, 0.15) 0%, transparent 60%)",
         "gradient-dark":
-          "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--surface-1)) 100%)",
+          "linear-gradient(180deg, #000000 0%, #0a0a0a 100%)",
         "noise": "url('/images/noise.png')",
       },
       animation: {

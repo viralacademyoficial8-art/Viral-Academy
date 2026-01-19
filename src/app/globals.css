@@ -3,101 +3,179 @@
 @tailwind utilities;
 
 @layer base {
+  /* Viral Academy Brand Colors
+   * Primary: #c4f010 (Lime Green)
+   * Black: #000000
+   * White: #FFFFFF
+   */
+
   :root {
-    --background: 225 15% 97%;
-    --foreground: 222 47% 11%;
+    /* Light mode - Clean white aesthetic */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 0%;
     --surface-1: 0 0% 100%;
-    --surface-2: 225 14% 96%;
+    --surface-2: 0 0% 96%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 301 73% 35%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 301 73% 40%;
-    --accent: 72 93% 50%;
-    --accent-foreground: 222 47% 11%;
-    --secondary: 225 14% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 225 14% 96%;
-    --muted-foreground: 222 14% 46%;
+    --popover-foreground: 0 0% 0%;
+
+    /* Primary - Viral Academy Lime Green #c4f010 */
+    --primary: 72 88% 50%;
+    --primary-foreground: 0 0% 0%;
+    --primary-hover: 72 88% 45%;
+
+    /* Accent - Same lime for consistency */
+    --accent: 72 88% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 14% 90%;
-    --input: 222 14% 90%;
-    --ring: 301 73% 35%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 72 88% 50%;
     --radius: 0.75rem;
+
+    /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 301 73% 35%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 14% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 222 14% 90%;
-    --sidebar-ring: 301 73% 35%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 72 88% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 72 88% 50%;
   }
 
   .dark {
-    --background: 222 47% 4%;
-    --foreground: 0 0% 95%;
-    --surface-1: 222 47% 6%;
-    --surface-2: 222 41% 10%;
-    --card: 222 47% 6%;
-    --card-foreground: 0 0% 95%;
-    --popover: 222 47% 6%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 301 73% 35%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 301 73% 40%;
-    --accent: 72 93% 50%;
-    --accent-foreground: 222 47% 11%;
-    --secondary: 222 41% 10%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 222 41% 10%;
-    --muted-foreground: 0 0% 64%;
+    /* Dark mode - Black with Lime accents (Brand default) */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --surface-1: 0 0% 6%;
+    --surface-2: 0 0% 10%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Primary - Viral Academy Lime Green #c4f010 */
+    --primary: 72 88% 50%;
+    --primary-foreground: 0 0% 0%;
+    --primary-hover: 72 88% 55%;
+
+    /* Accent */
+    --accent: 72 88% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
     --destructive: 0 63% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.08;
-    --input: 222 41% 10%;
-    --ring: 301 73% 35%;
-    --sidebar-background: 222 47% 4%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 301 73% 35%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 41% 10%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 100% / 0.08;
-    --sidebar-ring: 301 73% 35%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 72 88% 50%;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 72 88% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 72 88% 50%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  html { @apply scroll-smooth; }
+  html { @apply scroll-smooth dark; }
   body { @apply bg-background text-foreground antialiased; }
   h1, h2, h3, h4, h5, h6 { @apply font-sans tracking-tight; }
-  ::selection { @apply bg-primary/20 text-foreground; }
+  ::selection { @apply bg-primary/30 text-foreground; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { @apply bg-transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full hover:bg-primary/50; }
   *:focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }
 }
 
 @layer components {
+  /* Glass effects */
   .glass { @apply bg-surface-1/60 backdrop-blur-md border border-border; }
   .glass-strong { @apply bg-surface-1/80 backdrop-blur-lg border border-border; }
-  .glow { box-shadow: 0 0 40px -10px rgba(144, 23, 142, 0.3); }
-  .gradient-text { @apply bg-clip-text text-transparent; background-image: linear-gradient(135deg, hsl(301 73% 35%) 0%, hsl(301 73% 40%) 100%); }
-  .card-hover { @apply transition-all duration-200 hover:-translate-y-1; }
-  .btn-primary { @apply text-primary-foreground hover:opacity-90 transition-opacity; background-image: linear-gradient(135deg, hsl(301 73% 35%) 0%, hsl(301 73% 40%) 100%); }
+
+  /* Glow effects - Lime green */
+  .glow { box-shadow: 0 0 40px -10px rgba(196, 240, 16, 0.4); }
+  .glow-sm { box-shadow: 0 0 20px -5px rgba(196, 240, 16, 0.3); }
+  .glow-lg { box-shadow: 0 0 60px -10px rgba(196, 240, 16, 0.5); }
+
+  /* Gradient text - Lime */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #c4f010 0%, #a8d00d 100%);
+  }
+
+  /* Card hover */
+  .card-hover { @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-lg; }
+
+  /* Primary button gradient */
+  .btn-primary {
+    @apply text-primary-foreground font-semibold hover:opacity-90 transition-all;
+    background: #c4f010;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 20px -5px rgba(196, 240, 16, 0.5);
+  }
+
+  /* Layout utilities */
   .section-padding { @apply py-16 md:py-24 lg:py-32; }
   .container-wide { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+
+  /* Badges */
   .badge-primary { @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20; }
   .badge-accent { @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20; }
+
+  /* Progress bar */
   .progress-bar { @apply h-2 w-full bg-surface-2 rounded-full overflow-hidden; }
-  .progress-bar-fill { @apply h-full rounded-full transition-all duration-500; background-image: linear-gradient(135deg, hsl(301 73% 35%) 0%, hsl(301 73% 40%) 100%); }
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-500;
+    background: #c4f010;
+  }
+
+  /* Skeleton */
   .skeleton { @apply animate-pulse bg-surface-2 rounded-lg; }
-  .divider-gradient { @apply h-px w-full; background: linear-gradient(to right, transparent, hsl(var(--border)), transparent); }
+
+  /* Divider */
+  .divider-gradient {
+    @apply h-px w-full;
+    background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
+  }
+
+  /* Viral Academy specific */
+  .va-gradient-bg {
+    background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+  }
+
+  .va-lime-glow {
+    position: relative;
+  }
+  .va-lime-glow::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(196, 240, 16, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
 }
 
 @layer utilities {
