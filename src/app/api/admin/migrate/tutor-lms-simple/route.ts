@@ -1,0 +1,286 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { parse } from "csv-parse/sync";
+
+export const dynamic = "force-dynamic";
+
+interface TutorLMSRow {
+  curso_id: string;
+  curso_titulo: string;
+  curso_slug: string;
+  curso_descripcion: string;
+  curso_imagen: string;
+  modulo_id: string;
+  modulo_titulo: string;
+  modulo_orden: string;
+  leccion_id: string;
+  leccion_titulo: string;
+  leccion_orden: string;
+  leccion_contenido: string;
+  video_url: string;
+  video_poster?: string;
+  duracion?: string;
+}
+
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function extractYouTubeUrl(videoField: string | undefined): string | null {
+  if (!videoField) return null;
+
+  // The _video field might contain just the URL or a serialized object
+  const youtubePatterns = [
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/,
+    /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]+)/,
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
+  ];
+
+  for (const pattern of youtubePatterns) {
+    const match = videoField.match(pattern);
+    if (match) {
+      return `https://www.youtube.com/watch?v=${match[1]}`;
+    }
+  }
+
+  // If it looks like a URL, return as is
+  if (videoField.startsWith("http")) {
+    return videoField;
+  }
+
+  return null;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    // Check admin role
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+
+    if (!file) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Debes subir el archivo CSV de Tutor LMS",
+          imported: 0,
+          errors: []
+        },
+        { status: 400 }
+      );
+    }
+
+    // Parse CSV
+    let records: TutorLMSRow[];
+
+    try {
+      const text = await file.text();
+      records = parse(text, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+        bom: true,
+        relax_column_count: true,
+      });
+    } catch (parseError) {
+      return NextResponse.json({
+        success: false,
+        message: "Error al parsear el CSV",
+        imported: 0,
+        errors: [String(parseError)],
+      });
+    }
+
+    const errors: string[] = [];
+
+    // Build courses structure from flat data
+    const coursesMap = new Map<string, {
+      id: string;
+      title: string;
+      slug: string;
+      description: string;
+      thumbnail: string | null;
+      modules: Map<string, {
+        id: string;
+        title: string;
+        order: number;
+        lessons: Array<{
+          id: string;
+          title: string;
+          order: number;
+          content: string | null;
+          videoUrl: string | null;
+        }>;
+      }>;
+    }>();
+
+    // Process each row
+    for (const row of records) {
+      const cursoId = row.curso_id;
+      const cursoTitulo = row.curso_titulo;
+
+      if (!cursoId || !cursoTitulo) {
+        continue; // Skip rows without course info
+      }
+
+      // Get or create course entry
+      if (!coursesMap.has(cursoId)) {
+        const slug = row.curso_slug || generateSlug(cursoTitulo);
+        coursesMap.set(cursoId, {
+          id: cursoId,
+          title: cursoTitulo,
+          slug,
+          description: row.curso_descripcion || "",
+          thumbnail: row.curso_imagen || null,
+          modules: new Map(),
+        });
+      }
+
+      const course = coursesMap.get(cursoId)!;
+
+      // Process module if present
+      const moduloId = row.modulo_id;
+      const moduloTitulo = row.modulo_titulo;
+
+      if (moduloId && moduloTitulo) {
+        if (!course.modules.has(moduloId)) {
+          course.modules.set(moduloId, {
+            id: moduloId,
+            title: moduloTitulo,
+            order: parseInt(row.modulo_orden || "1", 10),
+            lessons: [],
+          });
+        }
+
+        const module = course.modules.get(moduloId)!;
+
+        // Process lesson if present
+        const leccionId = row.leccion_id;
+        const leccionTitulo = row.leccion_titulo;
+
+        if (leccionId && leccionTitulo) {
+          // Check if lesson already added (avoid duplicates)
+          const lessonExists = module.lessons.some(l => l.id === leccionId);
+          if (!lessonExists) {
+            module.lessons.push({
+              id: leccionId,
+              title: leccionTitulo,
+              order: parseInt(row.leccion_orden || String(module.lessons.length + 1), 10),
+              content: row.leccion_contenido || null,
+              videoUrl: extractYouTubeUrl(row.video_url),
+            });
+          }
+        }
+      }
+    }
+
+    // Import to database
+    let importedCourses = 0;
+    let importedModules = 0;
+    let importedLessons = 0;
+
+    for (const courseData of coursesMap.values()) {
+      try {
+        // Check if course already exists
+        const existingCourse = await prisma.course.findUnique({
+          where: { slug: courseData.slug },
+        });
+
+        if (existingCourse) {
+          errors.push(`Curso "${courseData.title}" ya existe (slug: ${courseData.slug})`);
+          continue;
+        }
+
+        // Skip courses without modules
+        if (courseData.modules.size === 0) {
+          errors.push(`Curso "${courseData.title}" no tiene módulos, se omite`);
+          continue;
+        }
+
+        // Create course with modules and lessons
+        const modulesData = Array.from(courseData.modules.values())
+          .sort((a, b) => a.order - b.order)
+          .map((module, moduleIndex) => ({
+            title: module.title,
+            order: moduleIndex + 1,
+            lessons: {
+              create: module.lessons
+                .sort((a, b) => a.order - b.order)
+                .map((lesson, lessonIndex) => ({
+                  title: lesson.title,
+                  order: lessonIndex + 1,
+                  videoUrl: lesson.videoUrl,
+                  content: lesson.content,
+                  published: false,
+                })),
+            },
+          }));
+
+        await prisma.course.create({
+          data: {
+            title: courseData.title,
+            slug: courseData.slug,
+            description: courseData.description,
+            thumbnail: courseData.thumbnail,
+            mentorId: session.user.id,
+            published: false,
+            level: "BEGINNER",
+            category: "MARKETING",
+            modules: {
+              create: modulesData,
+            },
+          },
+        });
+
+        importedCourses++;
+        importedModules += courseData.modules.size;
+        for (const module of courseData.modules.values()) {
+          importedLessons += module.lessons.length;
+        }
+      } catch (dbError) {
+        errors.push(`Error al crear curso "${courseData.title}": ${String(dbError)}`);
+      }
+    }
+
+    return NextResponse.json({
+      success: importedCourses > 0,
+      message: importedCourses > 0
+        ? `Migración completada: ${importedCourses} cursos, ${importedModules} módulos, ${importedLessons} lecciones`
+        : "No se pudo importar ningún curso",
+      imported: importedCourses,
+      details: {
+        courses: importedCourses,
+        modules: importedModules,
+        lessons: importedLessons,
+      },
+      errors,
+    });
+  } catch (error) {
+    console.error("Tutor LMS Simple Migration error:", error);
+    return NextResponse.json({
+      success: false,
+      message: "Error interno del servidor",
+      imported: 0,
+      errors: [String(error)],
+    });
+  }
+}
