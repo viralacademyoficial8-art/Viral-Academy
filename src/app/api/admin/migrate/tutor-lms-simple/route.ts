@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       debugInfo.totalRows = records.length;
       if (records.length > 0) {
         debugInfo.columns = Object.keys(records[0]);
-        debugInfo.sampleRow = records[0];
+        debugInfo.sampleRow = records[0] as unknown as Record<string, string>;
         debugInfo.hasRequiredColumns =
           "curso_id" in records[0] ||
           "ID" in records[0] ||
