@@ -3,16 +3,22 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { publicNavItems } from "@/config/navigation";
+import { UserMenu } from "./user-menu";
 
 export function NavbarPublic() {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+
+  const isLoggedIn = status === "authenticated" && !!session?.user;
+  const isAdmin = session?.user?.role === "ADMIN";
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -59,16 +65,40 @@ export function NavbarPublic() {
                 {item.title}
               </Link>
             ))}
+
+            {/* Admin Panel Link - Only for admins */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className={cn(
+                  "px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5",
+                  pathname.startsWith("/admin")
+                    ? "text-red-400 bg-red-500/10"
+                    : "text-red-400/80 hover:text-red-400 hover:bg-red-500/10"
+                )}
+              >
+                <Shield className="h-4 w-4" />
+                Admin
+              </Link>
+            )}
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons / User Menu */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/auth/login">Iniciar sesión</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/auth/registro">Únete ahora</Link>
-            </Button>
+            {status === "loading" ? (
+              <div className="h-9 w-24 rounded-lg bg-surface-2 animate-pulse" />
+            ) : isLoggedIn ? (
+              <UserMenu />
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/auth/login">Iniciar sesión</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/auth/registro">Únete ahora</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -110,13 +140,65 @@ export function NavbarPublic() {
                   {item.title}
                 </Link>
               ))}
+
+              {/* Admin Panel Link - Mobile */}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                    pathname.startsWith("/admin")
+                      ? "text-red-400 bg-red-500/10"
+                      : "text-red-400/80 hover:text-red-400 hover:bg-red-500/10"
+                  )}
+                >
+                  <Shield className="h-4 w-4" />
+                  Admin Panel
+                </Link>
+              )}
+
               <div className="pt-4 space-y-2 border-t border-border mt-4">
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href="/auth/login">Iniciar sesión</Link>
-                </Button>
-                <Button className="w-full" asChild>
-                  <Link href="/auth/registro">Únete ahora</Link>
-                </Button>
+                {isLoggedIn ? (
+                  <>
+                    <div className="px-4 py-2 flex items-center gap-3">
+                      {session.user.image ? (
+                        <img
+                          src={session.user.image}
+                          alt={session.user.name || "Avatar"}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary font-medium">
+                          {session.user.name?.[0]?.toUpperCase() || "U"}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">{session.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{session.user.email}</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href="/app/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                        Mi Panel
+                      </Link>
+                    </Button>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href="/app/perfil" onClick={() => setIsMobileMenuOpen(false)}>
+                        Mi Perfil
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href="/auth/login">Iniciar sesión</Link>
+                    </Button>
+                    <Button className="w-full" asChild>
+                      <Link href="/auth/registro">Únete ahora</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
