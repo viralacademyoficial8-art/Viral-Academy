@@ -2,6 +2,30 @@ import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 
+// Build providers array dynamically based on available credentials
+const providers: NextAuthConfig["providers"] = [];
+
+// Only add Google provider if credentials are available
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })
+  );
+}
+
+// Always add Credentials provider
+providers.push(
+  Credentials({
+    credentials: {
+      email: {},
+      password: {},
+    },
+    authorize: () => null, // Will be overridden in auth.ts
+  })
+);
+
 // Edge-compatible auth config (no Prisma, no bcrypt)
 // Used by middleware for route protection
 export const authConfig: NextAuthConfig = {
@@ -13,21 +37,7 @@ export const authConfig: NextAuthConfig = {
     newUser: "/app/onboarding",
     error: "/auth/error",
   },
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    // Credentials provider placeholder for middleware
-    // Actual validation happens in auth.ts
-    Credentials({
-      credentials: {
-        email: {},
-        password: {},
-      },
-      authorize: () => null, // Will be overridden in auth.ts
-    }),
-  ],
+  providers,
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
