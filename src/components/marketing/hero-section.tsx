@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
-import { partnerLogos } from "@/components/icons/partner-logos";
+import { PartnerLogo } from "@/components/icons/partner-logos";
 
 export function HeroSection() {
   return (
@@ -99,19 +99,9 @@ export function HeroSection() {
               Capacitaciones con equipos de empresas como:
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-              {siteConfig.partners.map((partner) => {
-                const LogoComponent = partnerLogos[partner as keyof typeof partnerLogos];
-                return LogoComponent ? (
-                  <LogoComponent
-                    key={partner}
-                    className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-                  />
-                ) : (
-                  <span key={partner} className="text-sm font-medium text-muted-foreground/60">
-                    {partner}
-                  </span>
-                );
-              })}
+              {siteConfig.partners.map((partner) => (
+                <PartnerLogo key={partner} name={partner} />
+              ))}
             </div>
           </motion.div>
         </div>
