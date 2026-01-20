@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 70">
-  <!-- TEC Shield -->
-  <path fill="#003366" d="M10 10h30v50H10V10zm5 5v40h20V15H15z"/>
-  <path fill="#003366" d="M20 25h10v5H20v-5zm0 10h10v5H20v-5z"/>
-  <!-- Text -->
-  <text x="50" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#003366">Tecnológico</text>
-  <text x="50" y="52" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#003366">de Monterrey</text>
-</svg>
