@@ -6,14 +6,14 @@ interface PartnerLogoProps {
   className?: string;
 }
 
-// Map partner names to their logo files
+// Map partner names to their logo files (PNG with original colors)
 const partnerLogoFiles: Record<string, { src: string; width: number; height: number }> = {
-  "Google": { src: "/images/partners/google.svg", width: 100, height: 34 },
-  "Google Cloud": { src: "/images/partners/google-cloud.svg", width: 120, height: 32 },
-  "UTEL Universidad": { src: "/images/partners/utel.svg", width: 90, height: 36 },
-  "Startup México": { src: "/images/partners/startup-mexico.svg", width: 130, height: 32 },
-  "Tecnológico de Monterrey": { src: "/images/partners/tec-monterrey.svg", width: 140, height: 40 },
-  "Talent Land México": { src: "/images/partners/talent-land.svg", width: 120, height: 32 },
+  "Google": { src: "/images/partners/google.png", width: 100, height: 34 },
+  "Google Cloud": { src: "/images/partners/google-cloud.png", width: 140, height: 40 },
+  "UTEL Universidad": { src: "/images/partners/utel.png", width: 80, height: 50 },
+  "Startup México": { src: "/images/partners/startup-mexico.png", width: 150, height: 32 },
+  "Tecnológico de Monterrey": { src: "/images/partners/tec-monterrey.png", width: 160, height: 40 },
+  "Talent Land México": { src: "/images/partners/talent-land.png", width: 140, height: 45 },
 };
 
 export function PartnerLogo({ name, className }: PartnerLogoProps) {
@@ -33,7 +33,7 @@ export function PartnerLogo({ name, className }: PartnerLogoProps) {
       alt={`${name} logo`}
       width={logoConfig.width}
       height={logoConfig.height}
-      className={cn("object-contain brightness-0 invert opacity-60 hover:opacity-100 transition-opacity", className)}
+      className={cn("object-contain opacity-80 hover:opacity-100 transition-opacity", className)}
     />
   );
 }
