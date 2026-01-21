@@ -47,7 +47,26 @@ function generateSlug(title: string): string {
 function extractYouTubeUrl(videoField: string | undefined): string | null {
   if (!videoField) return null;
 
-  // The _video field might contain just the URL or a serialized object
+  // Handle PHP serialized format from Tutor LMS
+  // Example: a:11:{s:6:"source";s:7:"youtube";...s:14:"source_youtube";s:28:"https://youtu.be/C98EHZwuZNg";...}
+  const youtubeSourceMatch = videoField.match(/source_youtube";s:\d+:"([^"]+)"/);
+  if (youtubeSourceMatch) {
+    return youtubeSourceMatch[1];
+  }
+
+  // Also check for source_vimeo
+  const vimeoSourceMatch = videoField.match(/source_vimeo";s:\d+:"([^"]+)"/);
+  if (vimeoSourceMatch && vimeoSourceMatch[1]) {
+    return vimeoSourceMatch[1];
+  }
+
+  // Check for external URL
+  const externalUrlMatch = videoField.match(/source_external_url";s:\d+:"([^"]+)"/);
+  if (externalUrlMatch && externalUrlMatch[1]) {
+    return externalUrlMatch[1];
+  }
+
+  // Standard YouTube URL patterns
   const youtubePatterns = [
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/,
     /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]+)/,
