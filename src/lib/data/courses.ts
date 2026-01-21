@@ -30,29 +30,34 @@ export async function getCourses() {
 }
 
 export async function getCourseBySlug(slug: string) {
-  const course = await prisma.course.findUnique({
-    where: { slug },
-    include: {
-      mentor: {
-        include: { profile: true }
-      },
-      modules: {
-        include: {
-          lessons: {
-            orderBy: { order: "asc" }
-          }
+  try {
+    const course = await prisma.course.findUnique({
+      where: { slug },
+      include: {
+        mentor: {
+          include: { profile: true }
         },
-        orderBy: { order: "asc" }
-      },
-      resources: true,
-      quiz: true,
-      _count: {
-        select: { enrollments: true }
+        modules: {
+          include: {
+            lessons: {
+              orderBy: { order: "asc" }
+            }
+          },
+          orderBy: { order: "asc" }
+        },
+        resources: true,
+        quiz: true,
+        _count: {
+          select: { enrollments: true }
+        }
       }
-    }
-  });
+    });
 
-  return course;
+    return course;
+  } catch (error) {
+    console.error("Error fetching course by slug:", error);
+    return null;
+  }
 }
 
 export async function getCoursesWithProgress(userId: string) {
