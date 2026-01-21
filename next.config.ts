@@ -15,11 +15,27 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "i.pravatar.cc",
       },
+      {
+        protocol: "https",
+        hostname: "**.wp.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.wordpress.com",
+      },
+      {
+        protocol: "https",
+        hostname: "viralacademy.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.viralacademy.com",
+      },
     ],
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: "2mb",
+      bodySizeLimit: "50mb",
     },
   },
 };
