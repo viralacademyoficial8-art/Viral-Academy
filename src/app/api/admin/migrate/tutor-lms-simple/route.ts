@@ -291,6 +291,38 @@ export async function POST(request: NextRequest) {
     let importedModules = 0;
     let importedLessons = 0;
 
+    // Get or create a valid mentor for the courses
+    let mentorId = session.user.id;
+
+    // First try to find an existing ADMIN or MENTOR user
+    const existingMentor = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { role: "ADMIN" },
+          { role: "MENTOR" }
+        ]
+      }
+    });
+
+    if (existingMentor) {
+      mentorId = existingMentor.id;
+    } else {
+      // Use the current user but ensure they exist
+      const currentUser = await prisma.user.findUnique({
+        where: { id: session.user.id }
+      });
+
+      if (!currentUser) {
+        return NextResponse.json({
+          success: false,
+          message: "No se encontró un usuario válido para asignar como mentor",
+          imported: 0,
+          errors: ["El usuario actual no existe en la base de datos"]
+        });
+      }
+      mentorId = currentUser.id;
+    }
+
     for (const courseData of coursesMap.values()) {
       try {
         // Check if course already exists
@@ -322,8 +354,8 @@ export async function POST(request: NextRequest) {
                   title: lesson.title,
                   order: lessonIndex + 1,
                   videoUrl: lesson.videoUrl,
-                  content: lesson.content,
-                  published: false,
+                  notes: lesson.content,
+                  published: true,
                 })),
             },
           }));
@@ -334,8 +366,8 @@ export async function POST(request: NextRequest) {
             slug: courseData.slug,
             description: courseData.description,
             thumbnail: courseData.thumbnail,
-            mentorId: session.user.id,
-            published: false,
+            mentorId: mentorId,
+            published: true,
             level: "BEGINNER",
             category: "MARKETING",
             modules: {
