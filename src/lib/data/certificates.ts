@@ -1,21 +1,26 @@
 import prisma from "@/lib/prisma";
 
 export async function getUserCertificates(userId: string) {
-  const certificates = await prisma.certificate.findMany({
-    where: { userId },
-    include: {
-      course: {
-        include: {
-          mentor: {
-            include: { profile: true }
+  try {
+    const certificates = await prisma.certificate.findMany({
+      where: { userId },
+      include: {
+        course: {
+          include: {
+            mentor: {
+              include: { profile: true }
+            }
           }
         }
-      }
-    },
-    orderBy: { issuedAt: "desc" }
-  });
+      },
+      orderBy: { issuedAt: "desc" }
+    });
 
-  return certificates;
+    return certificates;
+  } catch (error) {
+    console.error("Error fetching certificates:", error);
+    return [];
+  }
 }
 
 export async function getCertificateByCode(verificationCode: string) {
