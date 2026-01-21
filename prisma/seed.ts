@@ -1,4 +1,4 @@
-import { PrismaClient, Role, CourseLevel, CourseCategory, LiveType, PostCategory } from "@prisma/client";
+import { PrismaClient, Role, CourseLevel, LiveType, PostCategory } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -139,7 +139,7 @@ async function main() {
       description: "El curso más completo para dominar el marketing digital. Aprenderás desde los fundamentos hasta estrategias avanzadas de Meta Ads, Google Ads, email marketing y automatizaciones. Perfecto para emprendedores que quieren llevar su negocio al siguiente nivel.",
       shortDesc: "Domina el marketing digital y escala tu negocio",
       level: CourseLevel.BEGINNER,
-      category: CourseCategory.MARKETING,
+      category: "MARKETING",
       mentorId: leo.id,
       published: true,
       featured: true,
@@ -165,7 +165,7 @@ async function main() {
       description: "Descubre los secretos detrás del contenido que se comparte millones de veces. Aprenderás la psicología de la viralidad, técnicas de storytelling y cómo crear Reels, TikToks y contenido que conecte con tu audiencia.",
       shortDesc: "Crea contenido que se comparte solo",
       level: CourseLevel.INTERMEDIATE,
-      category: CourseCategory.CONTENT,
+      category: "CONTENT",
       mentorId: leo.id,
       published: true,
       featured: true,
@@ -191,7 +191,7 @@ async function main() {
       description: "Aprende a usar la IA como tu asistente personal 24/7. Desde ChatGPT hasta herramientas de automatización, descubre cómo multiplicar tu productividad y escalar tu negocio con inteligencia artificial.",
       shortDesc: "Tu asistente digital que trabaja 24/7",
       level: CourseLevel.BEGINNER,
-      category: CourseCategory.AI,
+      category: "AI",
       mentorId: leo.id,
       published: true,
       featured: false,
@@ -217,7 +217,7 @@ async function main() {
       description: "La base de todo éxito es la mentalidad correcta. En este curso desarrollarás la confianza, disciplina y claridad mental que necesitas para alcanzar tus metas más ambiciosas.",
       shortDesc: "Desarrolla el mindset del éxito",
       level: CourseLevel.BEGINNER,
-      category: CourseCategory.MINDSET,
+      category: "MINDSET",
       mentorId: susy.id,
       published: true,
       featured: true,
@@ -243,7 +243,7 @@ async function main() {
       description: "Crea sistemas de venta que trabajan para ti mientras duermes. Aprende a diseñar funnels efectivos y automatizar todo tu proceso de marketing y ventas.",
       shortDesc: "Vende en automático 24/7",
       level: CourseLevel.ADVANCED,
-      category: CourseCategory.AUTOMATION,
+      category: "AUTOMATION",
       mentorId: leo.id,
       published: true,
       featured: false,
@@ -269,7 +269,7 @@ async function main() {
       description: "Construye una marca personal que atraiga clientes y oportunidades. Aprende a posicionarte como experto, crear tu propuesta de valor única y destacar en tu industria.",
       shortDesc: "Conviértete en referente de tu industria",
       level: CourseLevel.INTERMEDIATE,
-      category: CourseCategory.BRAND,
+      category: "BRAND",
       mentorId: susy.id,
       published: true,
       featured: false,
