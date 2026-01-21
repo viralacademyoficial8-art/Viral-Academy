@@ -8,15 +8,27 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function AdminLivesPage() {
-  const lives = await prisma.liveEvent.findMany({
-    include: {
-      mentor: {
-        include: { profile: true },
+  let lives: Awaited<ReturnType<typeof prisma.liveEvent.findMany>> = [];
+
+  try {
+    lives = await prisma.liveEvent.findMany({
+      include: {
+        mentor: {
+          select: {
+            id: true,
+            email: true,
+            profile: {
+              select: { displayName: true },
+            },
+          },
+        },
+        replays: true,
       },
-      replays: true,
-    },
-    orderBy: { scheduledAt: "desc" },
-  });
+      orderBy: { scheduledAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Error loading lives:", error);
+  }
 
   const upcomingLives = lives.filter((live) => new Date(live.scheduledAt) > new Date());
   const pastLives = lives.filter((live) => new Date(live.scheduledAt) <= new Date());

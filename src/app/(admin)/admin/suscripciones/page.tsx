@@ -7,14 +7,26 @@ import { siteConfig } from "@/config/site";
 export const dynamic = "force-dynamic";
 
 export default async function AdminSuscripcionesPage() {
-  const subscriptions = await prisma.subscription.findMany({
-    include: {
-      user: {
-        include: { profile: true },
+  let subscriptions: Awaited<ReturnType<typeof prisma.subscription.findMany>> = [];
+
+  try {
+    subscriptions = await prisma.subscription.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            profile: {
+              select: { displayName: true },
+            },
+          },
+        },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Error loading subscriptions:", error);
+  }
 
   const activeSubscriptions = subscriptions.filter((sub) => sub.status === "ACTIVE");
   const canceledSubscriptions = subscriptions.filter((sub) => sub.status === "CANCELED");
