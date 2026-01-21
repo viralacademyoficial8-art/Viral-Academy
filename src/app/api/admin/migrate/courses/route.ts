@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
             description: courseData.data.description || "",
             shortDesc: courseData.data.shortDesc || null,
             level: (courseData.data.level as "BEGINNER" | "INTERMEDIATE" | "ADVANCED") || "BEGINNER",
-            category: (courseData.data.category as "MARKETING" | "CONTENT" | "AI" | "AUTOMATION" | "BRAND" | "ECOMMERCE" | "MINDSET" | "BUSINESS") || "MARKETING",
+            category: (courseData.data.category as "BOTS" | "LIVE_CLASSES" | "WEB_PAGES" | "EBOOKS" | "VIDEO_EDITING" | "AI" | "MARKETING" | "SOCIAL_VIRAL") || "MARKETING",
             thumbnail: courseData.data.thumbnail || null,
             mentorId: session.user.id, // Assign to current admin
             published: false, // Start as unpublished
