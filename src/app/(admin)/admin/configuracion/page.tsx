@@ -6,19 +6,35 @@ import { siteConfig } from "@/config/site";
 export const dynamic = "force-dynamic";
 
 export default async function AdminConfiguracionPage() {
-  const session = await auth();
+  let user = null;
+  let userCount = 0;
+  let courseCount = 0;
+  let subscriptionCount = 0;
 
-  const user = await prisma.user.findUnique({
-    where: { id: session?.user?.id },
-    include: { profile: true },
-  });
+  try {
+    const session = await auth();
 
-  // Get some system stats
-  const [userCount, courseCount, subscriptionCount] = await Promise.all([
-    prisma.user.count(),
-    prisma.course.count(),
-    prisma.subscription.count({ where: { status: "ACTIVE" } }),
-  ]);
+    user = await prisma.user.findUnique({
+      where: { id: session?.user?.id },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        profile: {
+          select: { displayName: true },
+        },
+      },
+    });
+
+    // Get some system stats
+    [userCount, courseCount, subscriptionCount] = await Promise.all([
+      prisma.user.count(),
+      prisma.course.count(),
+      prisma.subscription.count({ where: { status: "ACTIVE" } }),
+    ]);
+  } catch (error) {
+    console.error("Error loading config page:", error);
+  }
 
   const configSections = [
     {

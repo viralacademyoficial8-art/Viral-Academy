@@ -16,13 +16,35 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+type ResourceWithCourse = {
+  id: string;
+  title: string;
+  description: string | null;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number | null;
+  courseId: string | null;
+  lessonId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  course: { id: string; title: string } | null;
+};
+
 export default async function AdminRecursosPage() {
-  const resources = await prisma.resource.findMany({
-    include: {
-      course: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  let resources: ResourceWithCourse[] = [];
+
+  try {
+    resources = await prisma.resource.findMany({
+      include: {
+        course: {
+          select: { id: true, title: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Error loading resources:", error);
+  }
 
   const resourceTypeIcons: Record<string, typeof File> = {
     pdf: FileText,
