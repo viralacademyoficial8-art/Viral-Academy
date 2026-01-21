@@ -21,7 +21,7 @@ async function getEnrollments() {
     userId: enrollment.userId,
     userName: enrollment.user.profile?.displayName || enrollment.user.profile?.firstName || enrollment.user.email,
     userEmail: enrollment.user.email,
-    userAvatar: enrollment.user.profile?.avatar,
+    userAvatar: enrollment.user.profile?.avatar || null,
     courseId: enrollment.courseId,
     courseTitle: enrollment.course.title,
     courseSlug: enrollment.course.slug,
