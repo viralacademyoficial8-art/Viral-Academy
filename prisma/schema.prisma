@@ -218,7 +218,7 @@ model Course {
   thumbnail   String?
   coverImage  String?
   level       CourseLevel    @default(BEGINNER)
-  category    CourseCategory
+  category    String         @default("MARKETING")
   mentorId    String
   published   Boolean        @default(false)
   featured    Boolean        @default(false)
