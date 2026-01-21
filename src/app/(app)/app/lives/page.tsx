@@ -2,6 +2,7 @@ import { getAllLives, getUpcomingLives } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
 import { LivesClient } from "./lives-client";
+import { stripHtml } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ export default async function LivesPage() {
   const formatLive = (live: typeof allLives[0]) => ({
     id: live.id,
     title: live.title,
-    description: live.description,
+    description: live.description ? stripHtml(live.description) : null,
     type: live.type,
     mentor: {
       name: live.mentor.profile?.displayName || live.mentor.email,

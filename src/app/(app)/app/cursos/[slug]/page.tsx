@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCourseBySlug } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { CourseDetailClient } from "./course-detail-client";
+import { stripHtml } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export default async function CourseDetailPage({ params }: Props) {
     id: course.id,
     slug: course.slug,
     title: course.title,
-    description: course.description,
+    description: stripHtml(course.description),
     mentor: {
       name: course.mentor.profile?.displayName || course.mentor.email,
       avatar: course.mentor.profile?.avatar,
@@ -72,7 +73,7 @@ export default async function CourseDetailPage({ params }: Props) {
     studentsCount: course._count.enrollments,
     progress,
     enrolled: isEnrolled,
-    outcomes: course.outcomes,
+    outcomes: course.outcomes.map((outcome) => stripHtml(outcome)),
     modules: course.modules.map((module) => {
       const moduleLessonIds = module.lessons.map((l) => l.id);
       const moduleCompletedCount = moduleLessonIds.filter((id) => completedLessonIds.has(id)).length;
@@ -80,7 +81,7 @@ export default async function CourseDetailPage({ params }: Props) {
       return {
         id: module.id,
         title: module.title,
-        description: module.description,
+        description: module.description ? stripHtml(module.description) : null,
         duration: module.lessons.reduce((acc, l) => acc + (l.duration || 0), 0),
         lessonsCount: module.lessons.length,
         completedCount: moduleCompletedCount,
