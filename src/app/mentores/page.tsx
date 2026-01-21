@@ -1,16 +1,79 @@
 import { PublicLayout } from "@/components/layouts/public-layout";
+import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
 import { Users, Calendar, Video, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Mentores | Viral Academy",
   description: "Conoce a los mentores expertos de Viral Academy. Profesionales activos en el mercado que te guiarán en tu camino.",
 };
 
-export default function MentoresPage() {
+interface Mentor {
+  id: string;
+  name: string;
+  role: string;
+  specialties: string[];
+  bio: string;
+  image: string | null;
+  liveDay: string;
+  liveType: string;
+}
+
+async function getMentors(): Promise<Mentor[]> {
+  try {
+    const mentors = await prisma.user.findMany({
+      where: { role: "MENTOR" },
+      include: { profile: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (mentors.length === 0) {
+      // Fallback to siteConfig if no mentors in database
+      return siteConfig.mentors.map((m) => ({
+        id: m.id,
+        name: m.name,
+        role: m.role,
+        specialties: m.specialties,
+        bio: m.bio,
+        image: m.image,
+        liveDay: m.liveDay,
+        liveType: m.liveType,
+      }));
+    }
+
+    return mentors.map((mentor) => ({
+      id: mentor.id,
+      name: mentor.profile?.displayName || mentor.profile?.firstName || mentor.email.split("@")[0],
+      role: mentor.profile?.title || "Mentor",
+      specialties: mentor.profile?.specialties || [],
+      bio: mentor.profile?.bio || "",
+      image: mentor.profile?.avatar || null,
+      liveDay: mentor.profile?.liveDay || "",
+      liveType: mentor.profile?.liveType || "MARKETING",
+    }));
+  } catch (error) {
+    console.error("Error fetching mentors:", error);
+    // Fallback to siteConfig on error
+    return siteConfig.mentors.map((m) => ({
+      id: m.id,
+      name: m.name,
+      role: m.role,
+      specialties: m.specialties,
+      bio: m.bio,
+      image: m.image,
+      liveDay: m.liveDay,
+      liveType: m.liveType,
+    }));
+  }
+}
+
+export default async function MentoresPage() {
+  const mentors = await getMentors();
+
   return (
     <PublicLayout>
       {/* Hero */}
@@ -38,7 +101,7 @@ export default function MentoresPage() {
       <section className="py-16 md:py-24 bg-surface-1/50 border-y border-border">
         <div className="container-wide">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto">
-            {siteConfig.mentors.map((mentor) => (
+            {mentors.map((mentor) => (
               <div
                 key={mentor.id}
                 className="group relative overflow-hidden rounded-2xl bg-background border border-border hover:border-primary/50 transition-all duration-300"
@@ -53,12 +116,14 @@ export default function MentoresPage() {
                     </div>
                   </div>
                   {/* Live badge */}
-                  <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm border border-border">
-                    <Video className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-medium">
-                      {mentor.liveDay} - {mentor.liveType}
-                    </span>
-                  </div>
+                  {mentor.liveDay && (
+                    <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm border border-border">
+                      <Video className="w-4 h-4 text-primary" />
+                      <span className="text-xs font-medium">
+                        {mentor.liveDay} - {mentor.liveType === "MINDSET" ? "Mentalidad" : "Marketing"}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Content */}
@@ -70,16 +135,18 @@ export default function MentoresPage() {
                   </p>
 
                   {/* Specialties */}
-                  <div className="flex flex-wrap gap-2">
-                    {mentor.specialties.map((specialty) => (
-                      <span
-                        key={specialty}
-                        className="px-3 py-1 rounded-full bg-surface-2 text-xs font-medium"
-                      >
-                        {specialty}
-                      </span>
-                    ))}
-                  </div>
+                  {mentor.specialties.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {mentor.specialties.map((specialty) => (
+                        <span
+                          key={specialty}
+                          className="px-3 py-1 rounded-full bg-surface-2 text-xs font-medium"
+                        >
+                          {specialty}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -99,7 +166,7 @@ export default function MentoresPage() {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-6">
-              {siteConfig.mentors.map((mentor) => (
+              {mentors.filter(m => m.liveDay).map((mentor) => (
                 <div
                   key={mentor.id}
                   className="p-6 rounded-xl bg-surface-1 border border-border"

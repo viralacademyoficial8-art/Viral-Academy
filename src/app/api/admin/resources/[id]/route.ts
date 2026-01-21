@@ -14,29 +14,23 @@ export async function GET(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const lesson = await prisma.lesson.findUnique({
+    const resource = await prisma.resource.findUnique({
       where: { id },
       include: {
-        module: {
-          select: {
-            id: true,
-            title: true,
-            course: { select: { id: true, title: true, slug: true } },
-          },
-        },
-        resources: true,
+        course: { select: { id: true, title: true } },
+        lesson: { select: { id: true, title: true } },
       },
     });
 
-    if (!lesson) {
-      return NextResponse.json({ error: "Lección no encontrada" }, { status: 404 });
+    if (!resource) {
+      return NextResponse.json({ error: "Recurso no encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json(lesson);
+    return NextResponse.json(resource);
   } catch (error) {
-    console.error("Error fetching lesson:", error);
+    console.error("Error fetching resource:", error);
     return NextResponse.json(
-      { error: "Error al obtener la lección" },
+      { error: "Error al obtener el recurso" },
       { status: 500 }
     );
   }
@@ -48,6 +42,7 @@ export async function PATCH(
 ) {
   try {
     const session = await auth();
+    const { id } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -61,27 +56,26 @@ export async function PATCH(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const { id } = await params;
     const body = await request.json();
 
-    const lesson = await prisma.lesson.update({
+    const resource = await prisma.resource.update({
       where: { id },
       data: {
         title: body.title,
         description: body.description,
-        videoUrl: body.videoUrl,
-        duration: body.duration !== undefined ? parseInt(body.duration) : undefined,
-        notes: body.notes,
-        order: body.order !== undefined ? body.order : undefined,
-        published: body.published,
+        fileUrl: body.fileUrl,
+        fileType: body.fileType,
+        fileSize: body.fileSize !== undefined ? parseInt(body.fileSize) : undefined,
+        courseId: body.courseId,
+        lessonId: body.lessonId,
       },
     });
 
-    return NextResponse.json(lesson);
+    return NextResponse.json(resource);
   } catch (error) {
-    console.error("Error updating lesson:", error);
+    console.error("Error updating resource:", error);
     return NextResponse.json(
-      { error: "Error al actualizar la lección" },
+      { error: "Error al actualizar el recurso" },
       { status: 500 }
     );
   }
@@ -93,6 +87,7 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
+    const { id } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -106,17 +101,15 @@ export async function DELETE(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const { id } = await params;
-
-    await prisma.lesson.delete({
+    await prisma.resource.delete({
       where: { id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting lesson:", error);
+    console.error("Error deleting resource:", error);
     return NextResponse.json(
-      { error: "Error al eliminar la lección" },
+      { error: "Error al eliminar el recurso" },
       { status: 500 }
     );
   }
