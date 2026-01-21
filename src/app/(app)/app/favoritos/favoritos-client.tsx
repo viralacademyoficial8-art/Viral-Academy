@@ -128,10 +128,10 @@ export function FavoritosClient({ bookmarks }: FavoritosClientProps) {
                     <CardContent className="p-4 space-y-3">
                       <div className="flex gap-2">
                         <Badge variant="secondary" className="text-xs">
-                          {COURSE_CATEGORIES[course.category as keyof typeof COURSE_CATEGORIES]}
+                          {COURSE_CATEGORIES[course.category as keyof typeof COURSE_CATEGORIES] || course.category}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {COURSE_LEVELS[course.level as keyof typeof COURSE_LEVELS]}
+                          {COURSE_LEVELS[course.level as keyof typeof COURSE_LEVELS] || course.level}
                         </Badge>
                       </div>
                       <Link
