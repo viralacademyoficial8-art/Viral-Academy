@@ -7,8 +7,15 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+type LiveWithMentor = Awaited<ReturnType<typeof prisma.liveEvent.findMany<{
+  include: {
+    mentor: { select: { id: true; email: true; profile: { select: { displayName: true } } } };
+    replays: true;
+  };
+}>>>[number];
+
 export default async function AdminLivesPage() {
-  let lives: Awaited<ReturnType<typeof prisma.liveEvent.findMany>> = [];
+  let lives: LiveWithMentor[] = [];
 
   try {
     lives = await prisma.liveEvent.findMany({

@@ -6,8 +6,14 @@ import { siteConfig } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
+type SubscriptionWithUser = Awaited<ReturnType<typeof prisma.subscription.findMany<{
+  include: {
+    user: { select: { id: true; email: true; profile: { select: { displayName: true } } } };
+  };
+}>>>[number];
+
 export default async function AdminSuscripcionesPage() {
-  let subscriptions: Awaited<ReturnType<typeof prisma.subscription.findMany>> = [];
+  let subscriptions: SubscriptionWithUser[] = [];
 
   try {
     subscriptions = await prisma.subscription.findMany({
