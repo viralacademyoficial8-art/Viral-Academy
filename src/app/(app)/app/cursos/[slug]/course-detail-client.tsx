@@ -100,10 +100,10 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       >
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">
-            {COURSE_CATEGORIES[course.category as keyof typeof COURSE_CATEGORIES]}
+            {COURSE_CATEGORIES[course.category as keyof typeof COURSE_CATEGORIES] || course.category}
           </Badge>
           <Badge variant="secondary">
-            {COURSE_LEVELS[course.level as keyof typeof COURSE_LEVELS]}
+            {COURSE_LEVELS[course.level as keyof typeof COURSE_LEVELS] || course.level}
           </Badge>
         </div>
 
