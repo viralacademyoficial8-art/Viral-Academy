@@ -6,9 +6,23 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { siteConfig } from "@/config/site";
 
-export function MentorsSection() {
+interface Mentor {
+  id: string;
+  name: string;
+  role: string;
+  specialties: string[];
+  bio: string;
+  image: string | null;
+  liveDay: string;
+  liveType: string;
+}
+
+interface MentorsSectionProps {
+  mentors: Mentor[];
+}
+
+export function MentorsSection({ mentors }: MentorsSectionProps) {
   return (
     <section className="section-padding">
       <div className="container-wide">
@@ -33,7 +47,7 @@ export function MentorsSection() {
 
         {/* Mentors Grid */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {siteConfig.mentors.map((mentor, index) => (
+          {mentors.map((mentor, index) => (
             <motion.div
               key={mentor.id}
               initial={{ opacity: 0, y: 20 }}
@@ -50,11 +64,13 @@ export function MentorsSection() {
                     </div>
                   </div>
                   {/* Live day badge */}
-                  <div className="absolute top-4 right-4">
-                    <Badge variant="mentor">
-                      {mentor.liveDay === "Lunes" ? "Lunes Sublimes" : "Miércoles Virales"}
-                    </Badge>
-                  </div>
+                  {mentor.liveDay && (
+                    <div className="absolute top-4 right-4">
+                      <Badge variant="mentor">
+                        {mentor.liveDay === "Lunes" ? "Lunes Sublimes" : "Miércoles Virales"}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
 
                 <CardContent className="p-6">
@@ -64,13 +80,15 @@ export function MentorsSection() {
                     {mentor.bio}
                   </p>
                   {/* Specialties */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {mentor.specialties.slice(0, 4).map((specialty) => (
-                      <Badge key={specialty} variant="secondary" className="text-xs">
-                        {specialty}
-                      </Badge>
-                    ))}
-                  </div>
+                  {mentor.specialties.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {mentor.specialties.slice(0, 4).map((specialty) => (
+                        <Badge key={specialty} variant="secondary" className="text-xs">
+                          {specialty}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   <Button variant="ghost" className="p-0 h-auto" asChild>
                     <Link href={`/mentores#${mentor.id}`}>
                       Ver más <ArrowRight className="h-4 w-4 ml-1" />

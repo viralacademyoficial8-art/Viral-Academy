@@ -14,29 +14,25 @@ export async function GET(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const lesson = await prisma.lesson.findUnique({
+    const module = await prisma.module.findUnique({
       where: { id },
       include: {
-        module: {
-          select: {
-            id: true,
-            title: true,
-            course: { select: { id: true, title: true, slug: true } },
-          },
+        course: { select: { id: true, title: true } },
+        lessons: {
+          orderBy: { order: "asc" },
         },
-        resources: true,
       },
     });
 
-    if (!lesson) {
-      return NextResponse.json({ error: "Lección no encontrada" }, { status: 404 });
+    if (!module) {
+      return NextResponse.json({ error: "Módulo no encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json(lesson);
+    return NextResponse.json(module);
   } catch (error) {
-    console.error("Error fetching lesson:", error);
+    console.error("Error fetching module:", error);
     return NextResponse.json(
-      { error: "Error al obtener la lección" },
+      { error: "Error al obtener el módulo" },
       { status: 500 }
     );
   }
@@ -48,6 +44,7 @@ export async function PATCH(
 ) {
   try {
     const session = await auth();
+    const { id } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -61,27 +58,27 @@ export async function PATCH(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const { id } = await params;
     const body = await request.json();
 
-    const lesson = await prisma.lesson.update({
+    const module = await prisma.module.update({
       where: { id },
       data: {
         title: body.title,
         description: body.description,
-        videoUrl: body.videoUrl,
-        duration: body.duration !== undefined ? parseInt(body.duration) : undefined,
-        notes: body.notes,
         order: body.order !== undefined ? body.order : undefined,
-        published: body.published,
+      },
+      include: {
+        lessons: {
+          orderBy: { order: "asc" },
+        },
       },
     });
 
-    return NextResponse.json(lesson);
+    return NextResponse.json(module);
   } catch (error) {
-    console.error("Error updating lesson:", error);
+    console.error("Error updating module:", error);
     return NextResponse.json(
-      { error: "Error al actualizar la lección" },
+      { error: "Error al actualizar el módulo" },
       { status: 500 }
     );
   }
@@ -93,6 +90,7 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
+    const { id } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -106,17 +104,16 @@ export async function DELETE(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const { id } = await params;
-
-    await prisma.lesson.delete({
+    // This will cascade delete all lessons in the module
+    await prisma.module.delete({
       where: { id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting lesson:", error);
+    console.error("Error deleting module:", error);
     return NextResponse.json(
-      { error: "Error al eliminar la lección" },
+      { error: "Error al eliminar el módulo" },
       { status: 500 }
     );
   }

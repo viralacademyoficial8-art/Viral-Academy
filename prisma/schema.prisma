@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -116,12 +115,18 @@ model Profile {
   lastName       String?
   displayName    String?
   avatar         String?
-  bio            String?
+  bio            String?  @db.Text
   objective      String?
   level          String?  // beginner, intermediate, advanced
   onboardingDone Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // Mentor-specific fields
+  title          String?  // e.g., "Founder & Lead Mentor"
+  specialties    String[] // e.g., ["Meta Ads", "Viralidad", "IA aplicada"]
+  liveDay        String?  // e.g., "Miércoles"
+  liveType       String?  // e.g., "MARKETING", "MINDSET"
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

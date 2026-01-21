@@ -2,6 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export async function GET() {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!user || (user.role !== "ADMIN" && user.role !== "MENTOR")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+
+    const lives = await prisma.liveEvent.findMany({
+      include: {
+        mentor: {
+          include: { profile: true },
+        },
+      },
+      orderBy: { scheduledAt: "desc" },
+    });
+
+    return NextResponse.json(lives);
+  } catch (error) {
+    console.error("Error fetching lives:", error);
+    return NextResponse.json(
+      { error: "Error al obtener los lives" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();

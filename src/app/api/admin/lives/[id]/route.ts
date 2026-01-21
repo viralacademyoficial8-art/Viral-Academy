@@ -14,29 +14,25 @@ export async function GET(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const lesson = await prisma.lesson.findUnique({
+    const live = await prisma.liveEvent.findUnique({
       where: { id },
       include: {
-        module: {
-          select: {
-            id: true,
-            title: true,
-            course: { select: { id: true, title: true, slug: true } },
-          },
+        mentor: {
+          include: { profile: true },
         },
-        resources: true,
+        replays: true,
       },
     });
 
-    if (!lesson) {
-      return NextResponse.json({ error: "Lección no encontrada" }, { status: 404 });
+    if (!live) {
+      return NextResponse.json({ error: "Live no encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json(lesson);
+    return NextResponse.json(live);
   } catch (error) {
-    console.error("Error fetching lesson:", error);
+    console.error("Error fetching live:", error);
     return NextResponse.json(
-      { error: "Error al obtener la lección" },
+      { error: "Error al obtener el live" },
       { status: 500 }
     );
   }
@@ -48,6 +44,7 @@ export async function PATCH(
 ) {
   try {
     const session = await auth();
+    const { id } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -61,27 +58,28 @@ export async function PATCH(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const { id } = await params;
     const body = await request.json();
 
-    const lesson = await prisma.lesson.update({
+    const live = await prisma.liveEvent.update({
       where: { id },
       data: {
         title: body.title,
         description: body.description,
-        videoUrl: body.videoUrl,
+        type: body.type,
+        mentorId: body.mentorId,
+        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : undefined,
         duration: body.duration !== undefined ? parseInt(body.duration) : undefined,
-        notes: body.notes,
-        order: body.order !== undefined ? body.order : undefined,
+        meetingUrl: body.meetingUrl,
+        thumbnail: body.thumbnail,
         published: body.published,
       },
     });
 
-    return NextResponse.json(lesson);
+    return NextResponse.json(live);
   } catch (error) {
-    console.error("Error updating lesson:", error);
+    console.error("Error updating live:", error);
     return NextResponse.json(
-      { error: "Error al actualizar la lección" },
+      { error: "Error al actualizar el live" },
       { status: 500 }
     );
   }
@@ -93,6 +91,7 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
+    const { id } = await params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -106,17 +105,15 @@ export async function DELETE(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const { id } = await params;
-
-    await prisma.lesson.delete({
+    await prisma.liveEvent.delete({
       where: { id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting lesson:", error);
+    console.error("Error deleting live:", error);
     return NextResponse.json(
-      { error: "Error al eliminar la lección" },
+      { error: "Error al eliminar el live" },
       { status: 500 }
     );
   }

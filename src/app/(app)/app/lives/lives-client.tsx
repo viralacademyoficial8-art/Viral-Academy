@@ -24,9 +24,18 @@ interface Live {
   thumbnail: string | null;
 }
 
+interface Schedule {
+  id: string;
+  name: string;
+  day: string;
+  type: string;
+  topic: string;
+}
+
 interface LivesClientProps {
   upcomingLives: Live[];
   pastLives: Live[];
+  schedule: Schedule[];
 }
 
 const LIVE_TYPES: Record<string, { label: string; color: string }> = {
@@ -80,7 +89,29 @@ function LiveCard({ live, isUpcoming }: { live: Live; isUpcoming: boolean }) {
   );
 }
 
-export function LivesClient({ upcomingLives, pastLives }: LivesClientProps) {
+function ScheduleCard({ item }: { item: Schedule }) {
+  const isMindset = item.type === "MINDSET";
+
+  return (
+    <Card className={isMindset ? "border-purple-500/20 bg-purple-500/5" : "border-primary/20 bg-primary/5"}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isMindset ? "bg-purple-500/20" : "bg-primary/20"}`}>
+            <Video className={`w-5 h-5 ${isMindset ? "text-purple-500" : "text-primary"}`} />
+          </div>
+          <div>
+            <p className="font-semibold">
+              {item.day === "Lunes" ? "Lunes Sublimes" : item.day === "Miércoles" ? "Miércoles Virales" : `${item.day} con ${item.name}`}
+            </p>
+            <p className="text-sm text-muted-foreground">{item.topic} · 7:00 PM</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function LivesClient({ upcomingLives, pastLives, schedule }: LivesClientProps) {
   return (
     <div className="space-y-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -90,40 +121,19 @@ export function LivesClient({ upcomingLives, pastLives }: LivesClientProps) {
         </p>
       </motion.div>
 
-      {/* Schedule Info */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid sm:grid-cols-2 gap-4"
-      >
-        <Card className="border-purple-500/20 bg-purple-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Video className="w-5 h-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="font-semibold">Lunes Sublimes</p>
-                <p className="text-sm text-muted-foreground">Mentalidad · 7:00 PM</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                <Video className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold">Miércoles Virales</p>
-                <p className="text-sm text-muted-foreground">Marketing & IA · 7:00 PM</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      {/* Schedule Info - Dynamic from database */}
+      {schedule.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid sm:grid-cols-2 gap-4"
+        >
+          {schedule.map((item) => (
+            <ScheduleCard key={item.id} item={item} />
+          ))}
+        </motion.div>
+      )}
 
       <Tabs defaultValue="upcoming" className="space-y-6">
         <TabsList>

@@ -1,33 +1,43 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Users, Eye, DollarSign, Building2 } from "lucide-react";
-import { siteConfig } from "@/config/site";
+import { Users, Eye, BookOpen, Video } from "lucide-react";
 
-const statsData = [
-  {
-    icon: Users,
-    value: siteConfig.stats.students,
-    label: "alumnos formados",
-  },
-  {
-    icon: Eye,
-    value: siteConfig.stats.reach,
-    label: "de personas alcanzadas",
-  },
-  {
-    icon: DollarSign,
-    value: siteConfig.stats.adSpend,
-    label: "gestionados en ads",
-  },
-  {
-    icon: Building2,
-    value: siteConfig.stats.enterprises,
-    label: "empresas capacitadas",
-  },
-];
+interface Stats {
+  students: string;
+  courses: string;
+  lives: string;
+  reach: string;
+}
 
-export function StatsSection() {
+interface StatsSectionProps {
+  stats: Stats;
+}
+
+export function StatsSection({ stats }: StatsSectionProps) {
+  const statsData = [
+    {
+      icon: Users,
+      value: stats.students,
+      label: "alumnos formados",
+    },
+    {
+      icon: Eye,
+      value: stats.reach,
+      label: "de personas alcanzadas",
+    },
+    {
+      icon: BookOpen,
+      value: stats.courses,
+      label: "cursos disponibles",
+    },
+    {
+      icon: Video,
+      value: stats.lives,
+      label: "lives grabados",
+    },
+  ];
+
   return (
     <section className="py-16 md:py-20 border-y border-border bg-surface-1/50">
       <div className="container-wide">
