@@ -37,14 +37,14 @@ enum CourseLevel {
 }
 
 enum CourseCategory {
-  MARKETING
-  CONTENT
+  BOTS
+  LIVE_CLASSES
+  WEB_PAGES
+  EBOOKS
+  VIDEO_EDITING
   AI
-  AUTOMATION
-  BRAND
-  ECOMMERCE
-  MINDSET
-  BUSINESS
+  MARKETING
+  SOCIAL_VIRAL
 }
 
 enum LiveType {

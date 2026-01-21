@@ -93,14 +93,14 @@ export const COURSE_LEVELS = {
 } as const;
 
 export const COURSE_CATEGORIES = {
-  MARKETING: "Marketing Digital",
-  CONTENT: "Creación de Contenido",
+  BOTS: "Bots",
+  LIVE_CLASSES: "Clases En Vivo Grupales",
+  WEB_PAGES: "Crear Páginas Web",
+  EBOOKS: "Ebooks",
+  VIDEO_EDITING: "Edición De Video",
   AI: "Inteligencia Artificial",
-  AUTOMATION: "Automatización",
-  BRAND: "Marca Personal",
-  ECOMMERCE: "E-commerce",
-  MINDSET: "Mentalidad",
-  BUSINESS: "Negocios",
+  MARKETING: "Marketing Digital",
+  SOCIAL_VIRAL: "Redes Sociales y Viralidad",
 } as const;
 
 export const LIVE_TYPES = {
