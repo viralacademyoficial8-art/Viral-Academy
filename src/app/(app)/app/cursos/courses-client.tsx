@@ -80,8 +80,8 @@ export function CoursesClient({ courses }: CoursesClientProps) {
                   </div>
                   <CardContent className="p-5 space-y-4">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">{COURSE_CATEGORIES[course.category as keyof typeof COURSE_CATEGORIES]}</Badge>
-                      <Badge variant="outline" className="text-xs">{COURSE_LEVELS[course.level as keyof typeof COURSE_LEVELS]}</Badge>
+                      <Badge variant="secondary" className="text-xs">{COURSE_CATEGORIES[course.category as keyof typeof COURSE_CATEGORIES] || course.category}</Badge>
+                      <Badge variant="outline" className="text-xs">{COURSE_LEVELS[course.level as keyof typeof COURSE_LEVELS] || course.level}</Badge>
                     </div>
                     <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">{course.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">{course.shortDesc}</p>

@@ -37,6 +37,7 @@ enum CourseLevel {
 }
 
 enum CourseCategory {
+  // New categories
   BOTS
   LIVE_CLASSES
   WEB_PAGES
@@ -45,6 +46,13 @@ enum CourseCategory {
   AI
   MARKETING
   SOCIAL_VIRAL
+  // Legacy categories (for backward compatibility)
+  CONTENT
+  AUTOMATION
+  BRAND
+  ECOMMERCE
+  MINDSET
+  BUSINESS
 }
 
 enum LiveType {

@@ -93,6 +93,7 @@ export const COURSE_LEVELS = {
 } as const;
 
 export const COURSE_CATEGORIES = {
+  // New categories
   BOTS: "Bots",
   LIVE_CLASSES: "Clases En Vivo Grupales",
   WEB_PAGES: "Crear Páginas Web",
@@ -101,6 +102,13 @@ export const COURSE_CATEGORIES = {
   AI: "Inteligencia Artificial",
   MARKETING: "Marketing Digital",
   SOCIAL_VIRAL: "Redes Sociales y Viralidad",
+  // Legacy categories (for backward compatibility)
+  CONTENT: "Creación de Contenido",
+  AUTOMATION: "Automatización",
+  BRAND: "Marca Personal",
+  ECOMMERCE: "E-commerce",
+  MINDSET: "Mentalidad",
+  BUSINESS: "Negocios",
 } as const;
 
 export const LIVE_TYPES = {
