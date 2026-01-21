@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "src/app/api/admin/migrate/**/*.ts": {
+      "maxDuration": 60
+    }
+  }
+}
