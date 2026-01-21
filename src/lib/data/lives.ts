@@ -1,35 +1,53 @@
 import prisma from "@/lib/prisma";
 
 export async function getUpcomingLives(limit = 5) {
-  const lives = await prisma.liveEvent.findMany({
-    where: {
-      published: true,
-      scheduledAt: { gte: new Date() }
-    },
-    include: {
-      mentor: {
-        include: { profile: true }
-      }
-    },
-    orderBy: { scheduledAt: "asc" },
-    take: limit
-  });
+  try {
+    const lives = await prisma.liveEvent.findMany({
+      where: {
+        published: true,
+        scheduledAt: { gte: new Date() }
+      },
+      include: {
+        mentor: {
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { displayName: true, avatar: true } },
+          },
+        }
+      },
+      orderBy: { scheduledAt: "asc" },
+      take: limit
+    });
 
-  return lives;
+    return lives;
+  } catch (error) {
+    console.error("Error fetching upcoming lives:", error);
+    return [];
+  }
 }
 
 export async function getAllLives() {
-  const lives = await prisma.liveEvent.findMany({
-    where: { published: true },
-    include: {
-      mentor: {
-        include: { profile: true }
-      }
-    },
-    orderBy: { scheduledAt: "desc" }
-  });
+  try {
+    const lives = await prisma.liveEvent.findMany({
+      where: { published: true },
+      include: {
+        mentor: {
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { displayName: true, avatar: true } },
+          },
+        }
+      },
+      orderBy: { scheduledAt: "desc" }
+    });
 
-  return lives;
+    return lives;
+  } catch (error) {
+    console.error("Error fetching all lives:", error);
+    return [];
+  }
 }
 
 export async function getLiveById(id: string) {
@@ -47,19 +65,28 @@ export async function getLiveById(id: string) {
 }
 
 export async function getReplays(limit?: number) {
-  const replays = await prisma.replay.findMany({
-    where: { published: true },
-    include: {
-      mentor: {
-        include: { profile: true }
+  try {
+    const replays = await prisma.replay.findMany({
+      where: { published: true },
+      include: {
+        mentor: {
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { displayName: true, avatar: true } },
+          },
+        },
+        liveEvent: true
       },
-      liveEvent: true
-    },
-    orderBy: { recordedAt: "desc" },
-    ...(limit && { take: limit })
-  });
+      orderBy: { recordedAt: "desc" },
+      ...(limit && { take: limit })
+    });
 
-  return replays;
+    return replays;
+  } catch (error) {
+    console.error("Error fetching replays:", error);
+    return [];
+  }
 }
 
 export async function getReplayById(id: string) {
