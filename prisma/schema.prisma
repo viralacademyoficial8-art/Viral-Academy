@@ -80,6 +80,7 @@ model User {
   emailVerified DateTime?
   password      String?
   role          Role      @default(STUDENT)
+  active        Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -90,6 +91,8 @@ model User {
   subscription   Subscription?
   enrollments    Enrollment[]
   lessonProgress LessonProgress[]
+  lessonNotes    LessonNote[]
+  bookmarks      Bookmark[]
   certificates   Certificate[]
   quizAttempts   QuizAttempt[]
   posts          Post[]
@@ -106,6 +109,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([active])
 }
 
 model Profile {
@@ -221,6 +225,7 @@ model Course {
   modules     Module[]
   resources   Resource[]
   enrollments Enrollment[]
+  bookmarks   Bookmark[]
   quiz        Quiz?
   certificates Certificate[]
 
@@ -258,9 +263,11 @@ model Lesson {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  module    Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  resources Resource[]
-  progress  LessonProgress[]
+  module      Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  resources   Resource[]
+  progress    LessonProgress[]
+  userNotes   LessonNote[]
+  bookmarks   Bookmark[]
 
   @@index([moduleId])
 }
@@ -319,6 +326,38 @@ model LessonProgress {
   @@unique([userId, lessonId])
   @@index([userId])
   @@index([lessonId])
+}
+
+model LessonNote {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  content   String   @db.Text
+  timestamp Int?     // Timestamp del video donde se tomó la nota
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([lessonId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String?
+  lessonId  String?
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@unique([userId, lessonId])
+  @@index([userId])
 }
 
 // ============================================
