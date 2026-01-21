@@ -24,7 +24,7 @@ async function getUsers() {
     name: user.profile?.displayName || user.profile?.firstName || null,
     avatar: user.profile?.avatar || null,
     role: user.role,
-    active: user.active,
+    active: (user as { active?: boolean }).active ?? true,
     createdAt: user.createdAt.toISOString(),
     subscriptionStatus: user.subscription?.status || null,
     subscriptionEnd: user.subscription?.currentPeriodEnd?.toISOString() || null,

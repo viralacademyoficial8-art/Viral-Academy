@@ -105,16 +105,35 @@ export async function PATCH(
       updateData.role = body.role;
     }
 
+    // Only update active if the column exists (graceful handling for pre-migration)
     if (body.active !== undefined) {
       updateData.active = body.active;
     }
 
-    const user = await prisma.user.update({
-      where: { id },
-      data: updateData,
-    });
-
-    return NextResponse.json(user);
+    try {
+      const user = await prisma.user.update({
+        where: { id },
+        data: updateData,
+      });
+      return NextResponse.json(user);
+    } catch (updateError) {
+      // If active column doesn't exist, retry without it
+      if (String(updateError).includes("active") || String(updateError).includes("Unknown arg")) {
+        delete updateData.active;
+        if (Object.keys(updateData).length === 0) {
+          return NextResponse.json(
+            { error: "El campo 'active' no está disponible aún" },
+            { status: 503 }
+          );
+        }
+        const user = await prisma.user.update({
+          where: { id },
+          data: updateData,
+        });
+        return NextResponse.json(user);
+      }
+      throw updateError;
+    }
   } catch (error) {
     console.error("Error updating user:", error);
     return NextResponse.json(

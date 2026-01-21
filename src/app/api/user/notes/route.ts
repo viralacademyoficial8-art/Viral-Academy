@@ -38,6 +38,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(notes);
   } catch (error) {
     console.error("Error fetching notes:", error);
+    // Return empty array if table doesn't exist yet
+    if (String(error).includes("does not exist") || String(error).includes("relation")) {
+      return NextResponse.json([]);
+    }
     return NextResponse.json(
       { error: "Error al obtener las notas" },
       { status: 500 }
@@ -74,6 +78,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(note);
   } catch (error) {
     console.error("Error creating note:", error);
+    if (String(error).includes("does not exist") || String(error).includes("relation")) {
+      return NextResponse.json(
+        { error: "La funcionalidad de notas no está disponible aún" },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Error al crear la nota" },
       { status: 500 }
@@ -115,6 +125,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(note);
   } catch (error) {
     console.error("Error updating note:", error);
+    if (String(error).includes("does not exist") || String(error).includes("relation")) {
+      return NextResponse.json(
+        { error: "La funcionalidad de notas no está disponible aún" },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Error al actualizar la nota" },
       { status: 500 }
@@ -153,6 +169,12 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting note:", error);
+    if (String(error).includes("does not exist") || String(error).includes("relation")) {
+      return NextResponse.json(
+        { error: "La funcionalidad de notas no está disponible aún" },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Error al eliminar la nota" },
       { status: 500 }

@@ -50,6 +50,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(bookmarks);
   } catch (error) {
     console.error("Error fetching bookmarks:", error);
+    // Return empty array if table doesn't exist yet
+    if (String(error).includes("does not exist") || String(error).includes("relation")) {
+      return NextResponse.json([]);
+    }
     return NextResponse.json(
       { error: "Error al obtener los favoritos" },
       { status: 500 }
@@ -105,6 +109,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(bookmark);
   } catch (error) {
     console.error("Error creating bookmark:", error);
+    // Handle case where table doesn't exist
+    if (String(error).includes("does not exist") || String(error).includes("relation")) {
+      return NextResponse.json(
+        { error: "La funcionalidad de favoritos no está disponible aún" },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Error al agregar a favoritos" },
       { status: 500 }
@@ -157,6 +168,13 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting bookmark:", error);
+    // Handle case where table doesn't exist
+    if (String(error).includes("does not exist") || String(error).includes("relation")) {
+      return NextResponse.json(
+        { error: "La funcionalidad de favoritos no está disponible aún" },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Error al eliminar de favoritos" },
       { status: 500 }
