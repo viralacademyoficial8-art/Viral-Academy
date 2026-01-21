@@ -9,42 +9,60 @@ interface Props {
 }
 
 async function getCourse(id: string) {
-  const course = await prisma.course.findUnique({
-    where: { id },
-    include: {
-      mentor: {
-        include: {
-          profile: true,
+  try {
+    const course = await prisma.course.findUnique({
+      where: { id },
+      include: {
+        mentor: {
+          select: {
+            id: true,
+            email: true,
+            profile: {
+              select: { displayName: true, firstName: true },
+            },
+          },
         },
-      },
-      modules: {
-        orderBy: { order: "asc" },
-        include: {
-          lessons: {
-            orderBy: { order: "asc" },
+        modules: {
+          orderBy: { order: "asc" },
+          include: {
+            lessons: {
+              orderBy: { order: "asc" },
+            },
           },
         },
       },
-    },
-  });
+    });
 
-  return course;
+    return course;
+  } catch (error) {
+    console.error("Error fetching course:", error);
+    return null;
+  }
 }
 
 async function getMentors() {
-  const mentors = await prisma.user.findMany({
-    where: {
-      OR: [{ role: "ADMIN" }, { role: "MENTOR" }],
-    },
-    include: {
-      profile: true,
-    },
-  });
+  try {
+    const mentors = await prisma.user.findMany({
+      where: {
+        OR: [{ role: "ADMIN" }, { role: "MENTOR" }],
+      },
+      select: {
+        id: true,
+        email: true,
+        profile: {
+          select: { displayName: true, firstName: true },
+        },
+      },
+    });
 
-  return mentors.map((m) => ({
-    id: m.id,
-    name: m.profile?.displayName || m.profile?.firstName || m.email,
-  }));
+    return mentors.map((m) => ({
+      id: m.id,
+      name: m.profile?.displayName || m.profile?.firstName || m.email,
+    }));
+  } catch (error) {
+    console.error("Error fetching mentors:", error);
+    return [];
+  }
 }
 
 export default async function CourseEditPage({ params }: Props) {
