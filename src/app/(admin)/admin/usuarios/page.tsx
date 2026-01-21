@@ -4,45 +4,70 @@ import { UsersClient } from "./users-client";
 export const dynamic = "force-dynamic";
 
 async function getUsers() {
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      profile: true,
-      subscription: true,
-      _count: {
-        select: {
-          enrollments: true,
-          certificates: true,
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        profile: {
+          select: {
+            displayName: true,
+            firstName: true,
+            avatar: true,
+          },
+        },
+        subscription: {
+          select: {
+            status: true,
+            currentPeriodEnd: true,
+          },
+        },
+        _count: {
+          select: {
+            enrollments: true,
+            certificates: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  return users.map((user) => ({
-    id: user.id,
-    email: user.email,
-    name: user.profile?.displayName || user.profile?.firstName || null,
-    avatar: user.profile?.avatar || null,
-    role: user.role,
-    active: (user as { active?: boolean }).active ?? true,
-    createdAt: user.createdAt.toISOString(),
-    subscriptionStatus: user.subscription?.status || null,
-    subscriptionEnd: user.subscription?.currentPeriodEnd?.toISOString() || null,
-    enrollmentsCount: user._count.enrollments,
-    certificatesCount: user._count.certificates,
-  }));
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      name: user.profile?.displayName || user.profile?.firstName || null,
+      avatar: user.profile?.avatar || null,
+      role: user.role,
+      active: true, // Default to true since we can't query this field yet
+      createdAt: user.createdAt.toISOString(),
+      subscriptionStatus: user.subscription?.status || null,
+      subscriptionEnd: user.subscription?.currentPeriodEnd?.toISOString() || null,
+      enrollmentsCount: user._count.enrollments,
+      certificatesCount: user._count.certificates,
+    }));
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
 }
 
 async function getStats() {
-  const [total, admins, mentors, students, withSubscription] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { role: "ADMIN" } }),
-    prisma.user.count({ where: { role: "MENTOR" } }),
-    prisma.user.count({ where: { role: "STUDENT" } }),
-    prisma.subscription.count({ where: { status: "ACTIVE" } }),
-  ]);
+  try {
+    const [total, admins, mentors, students, withSubscription] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { role: "ADMIN" } }),
+      prisma.user.count({ where: { role: "MENTOR" } }),
+      prisma.user.count({ where: { role: "STUDENT" } }),
+      prisma.subscription.count({ where: { status: "ACTIVE" } }),
+    ]);
 
-  return { total, admins, mentors, students, withSubscription };
+    return { total, admins, mentors, students, withSubscription };
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    return { total: 0, admins: 0, mentors: 0, students: 0, withSubscription: 0 };
+  }
 }
 
 export default async function UsersPage() {
