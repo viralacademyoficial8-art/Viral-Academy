@@ -1,20 +1,25 @@
 import prisma from "@/lib/prisma";
 
 export async function getResources(limit?: number) {
-  const resources = await prisma.resource.findMany({
-    include: {
-      course: {
-        select: { id: true, title: true, slug: true }
+  try {
+    const resources = await prisma.resource.findMany({
+      include: {
+        course: {
+          select: { id: true, title: true, slug: true }
+        },
+        lesson: {
+          select: { id: true, title: true }
+        }
       },
-      lesson: {
-        select: { id: true, title: true }
-      }
-    },
-    orderBy: { createdAt: "desc" },
-    ...(limit && { take: limit })
-  });
+      orderBy: { createdAt: "desc" },
+      ...(limit && { take: limit })
+    });
 
-  return resources;
+    return resources;
+  } catch (error) {
+    console.error("Error fetching resources:", error);
+    return [];
+  }
 }
 
 export async function getResourceById(id: string) {

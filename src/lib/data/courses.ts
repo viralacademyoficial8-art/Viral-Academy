@@ -1,23 +1,32 @@
 import prisma from "@/lib/prisma";
 
 export async function getCourses() {
-  const courses = await prisma.course.findMany({
-    where: { published: true },
-    include: {
-      mentor: {
-        include: { profile: true }
+  try {
+    const courses = await prisma.course.findMany({
+      where: { published: true },
+      include: {
+        mentor: {
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { displayName: true } },
+          },
+        },
+        modules: {
+          include: { lessons: true }
+        },
+        _count: {
+          select: { enrollments: true }
+        }
       },
-      modules: {
-        include: { lessons: true }
-      },
-      _count: {
-        select: { enrollments: true }
-      }
-    },
-    orderBy: [{ featured: "desc" }, { order: "asc" }]
-  });
+      orderBy: [{ featured: "desc" }, { order: "asc" }]
+    });
 
-  return courses;
+    return courses;
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    return [];
+  }
 }
 
 export async function getCourseBySlug(slug: string) {
@@ -94,70 +103,79 @@ export async function getCoursesWithProgress(userId: string) {
 }
 
 export async function getAllCoursesWithUserStatus(userId?: string) {
-  const courses = await prisma.course.findMany({
-    where: { published: true },
-    include: {
-      mentor: {
-        include: { profile: true }
-      },
-      modules: {
-        include: { lessons: true }
-      },
-      _count: {
-        select: { enrollments: true }
-      }
-    },
-    orderBy: [{ featured: "desc" }, { order: "asc" }]
-  });
-
-  if (!userId) {
-    return courses.map(course => ({
-      ...course,
-      enrolled: false,
-      progress: 0
-    }));
-  }
-
-  // Get user's enrollments
-  const enrollments = await prisma.enrollment.findMany({
-    where: { userId },
-    select: { courseId: true }
-  });
-  const enrolledCourseIds = new Set(enrollments.map(e => e.courseId));
-
-  // Get progress for each enrolled course
-  const coursesWithStatus = await Promise.all(
-    courses.map(async (course) => {
-      const isEnrolled = enrolledCourseIds.has(course.id);
-
-      if (!isEnrolled) {
-        return { ...course, enrolled: false, progress: 0 };
-      }
-
-      const totalLessons = course.modules.reduce(
-        (acc, mod) => acc + mod.lessons.length,
-        0
-      );
-
-      const completedLessons = await prisma.lessonProgress.count({
-        where: {
-          userId,
-          completed: true,
-          lesson: {
-            module: { courseId: course.id }
-          }
+  try {
+    const courses = await prisma.course.findMany({
+      where: { published: true },
+      include: {
+        mentor: {
+          select: {
+            id: true,
+            email: true,
+            profile: { select: { displayName: true } },
+          },
+        },
+        modules: {
+          include: { lessons: true }
+        },
+        _count: {
+          select: { enrollments: true }
         }
-      });
+      },
+      orderBy: [{ featured: "desc" }, { order: "asc" }]
+    });
 
-      const progress = totalLessons > 0
-        ? Math.round((completedLessons / totalLessons) * 100)
-        : 0;
+    if (!userId) {
+      return courses.map(course => ({
+        ...course,
+        enrolled: false,
+        progress: 0
+      }));
+    }
 
-      return { ...course, enrolled: true, progress };
-    })
-  );
+    // Get user's enrollments
+    const enrollments = await prisma.enrollment.findMany({
+      where: { userId },
+      select: { courseId: true }
+    });
+    const enrolledCourseIds = new Set(enrollments.map(e => e.courseId));
 
-  return coursesWithStatus;
+    // Get progress for each enrolled course
+    const coursesWithStatus = await Promise.all(
+      courses.map(async (course) => {
+        const isEnrolled = enrolledCourseIds.has(course.id);
+
+        if (!isEnrolled) {
+          return { ...course, enrolled: false, progress: 0 };
+        }
+
+        const totalLessons = course.modules.reduce(
+          (acc, mod) => acc + mod.lessons.length,
+          0
+        );
+
+        const completedLessons = await prisma.lessonProgress.count({
+          where: {
+            userId,
+            completed: true,
+            lesson: {
+              module: { courseId: course.id }
+            }
+          }
+        });
+
+        const progress = totalLessons > 0
+          ? Math.round((completedLessons / totalLessons) * 100)
+          : 0;
+
+        return { ...course, enrolled: true, progress };
+      })
+    );
+
+    return coursesWithStatus;
+  } catch (error) {
+    console.error("Error fetching courses with user status:", error);
+    return [];
+  }
 }
 
 export async function getUserCourseProgress(userId: string, courseId: string) {
