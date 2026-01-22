@@ -144,7 +144,8 @@ export function OnboardingClient({
       });
 
       if (response.ok) {
-        router.push("/app/dashboard");
+        // Use window.location for a full page reload to ensure session is refreshed
+        window.location.href = "/app/dashboard";
       } else {
         alert("Error al guardar. Por favor intenta de nuevo.");
         setIsLoading(false);
