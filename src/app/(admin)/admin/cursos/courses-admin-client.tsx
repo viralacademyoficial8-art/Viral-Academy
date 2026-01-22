@@ -13,6 +13,9 @@ import {
   Star,
   BookOpen,
   Users,
+  AlertTriangle,
+  Loader2,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,13 +88,19 @@ const levelLabels: Record<string, string> = {
 };
 
 const categoryLabels: Record<string, string> = {
-  MARKETING: "Marketing",
-  CONTENT: "Contenido",
+  BOTS: "Bots",
+  LIVE_CLASSES: "Clases En Vivo Grupales",
+  WEB_PAGES: "Crear Páginas Web",
+  EBOOKS: "Ebooks",
+  VIDEO_EDITING: "Edición De Video",
   AI: "Inteligencia Artificial",
+  MARKETING: "Marketing Digital",
+  SOCIAL_VIRAL: "Redes Sociales y Viralidad",
+  CONTENT: "Creación de Contenido",
   AUTOMATION: "Automatización",
   BRAND: "Marca Personal",
   ECOMMERCE: "E-commerce",
-  MINDSET: "Mindset",
+  MINDSET: "Mentalidad",
   BUSINESS: "Negocios",
 };
 
@@ -99,7 +108,19 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [importJson, setImportJson] = useState("");
+  const [importResult, setImportResult] = useState<{
+    success: boolean;
+    imported: number;
+    failed: number;
+    errors?: Array<{ title: string; error: string }>;
+  } | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -199,6 +220,110 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (deleteConfirmText !== "ELIMINAR TODO") return;
+
+    setIsDeletingAll(true);
+    try {
+      const res = await fetch("/api/admin/courses", {
+        method: "DELETE",
+        headers: {
+          "X-Confirm-Delete-All": "DELETE_ALL_COURSES",
+        },
+      });
+
+      if (res.ok) {
+        setIsDeleteAllOpen(false);
+        setDeleteConfirmText("");
+        router.refresh();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Error al eliminar cursos");
+      }
+    } catch (error) {
+      console.error("Error deleting all courses:", error);
+      alert("Error al eliminar cursos");
+    } finally {
+      setIsDeletingAll(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importJson.trim()) return;
+
+    setIsImporting(true);
+    setImportResult(null);
+
+    try {
+      const parsed = JSON.parse(importJson);
+      const res = await fetch("/api/admin/courses/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setImportResult(data);
+        if (data.imported > 0) {
+          router.refresh();
+        }
+      } else {
+        setImportResult({
+          success: false,
+          imported: 0,
+          failed: 1,
+          errors: [{ title: "Error", error: data.error || "Error desconocido" }],
+        });
+      }
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        setImportResult({
+          success: false,
+          imported: 0,
+          failed: 1,
+          errors: [{ title: "JSON inválido", error: "El formato JSON no es válido. Verifica la sintaxis." }],
+        });
+      } else {
+        setImportResult({
+          success: false,
+          imported: 0,
+          failed: 1,
+          errors: [{ title: "Error", error: error instanceof Error ? error.message : "Error desconocido" }],
+        });
+      }
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setImportJson(content);
+    };
+    reader.readAsText(file);
+  };
+
+  const downloadTemplate = async () => {
+    const res = await fetch("/api/admin/courses/import");
+    const data = await res.json();
+    const blob = new Blob([JSON.stringify(data.template, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "course-template.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -206,10 +331,25 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
           <h1 className="text-2xl font-bold">Cursos</h1>
           <p className="text-muted-foreground">Gestiona los cursos de la plataforma</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo Curso
-        </Button>
+        <div className="flex gap-2">
+          {courses.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setIsDeleteAllOpen(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Eliminar Todo
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <Upload className="w-4 h-4 mr-2" />
+            Importar
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo Curso
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -477,6 +617,209 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
             </Button>
             <Button onClick={handleCreate} disabled={isLoading || !formData.title}>
               {isLoading ? "Creando..." : "Crear Curso"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete All Dialog */}
+      <Dialog open={isDeleteAllOpen} onOpenChange={setIsDeleteAllOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Eliminar Todos los Cursos
+            </DialogTitle>
+            <DialogDescription className="space-y-3 pt-2">
+              <p>
+                Esta acción eliminará <strong>{courses.length} cursos</strong> y
+                todos sus datos relacionados:
+              </p>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>Todos los módulos y lecciones</li>
+                <li>Todo el progreso de los estudiantes</li>
+                <li>Todas las inscripciones</li>
+                <li>Todos los recursos asociados</li>
+              </ul>
+              <p className="text-destructive font-medium">
+                Esta acción NO se puede deshacer.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-delete">
+              Escribe <strong>ELIMINAR TODO</strong> para confirmar:
+            </Label>
+            <Input
+              id="confirm-delete"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="ELIMINAR TODO"
+              className="font-mono"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteAllOpen(false);
+                setDeleteConfirmText("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAll}
+              disabled={isDeletingAll || deleteConfirmText !== "ELIMINAR TODO"}
+            >
+              {isDeletingAll ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar Todo
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={isImportOpen} onOpenChange={(open) => {
+        setIsImportOpen(open);
+        if (!open) {
+          setImportJson("");
+          setImportResult(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Importar Cursos
+            </DialogTitle>
+            <DialogDescription>
+              Importa cursos desde un archivo JSON con módulos y lecciones incluidos.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Template Download */}
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="text-sm">
+                <p className="font-medium">Descargar plantilla</p>
+                <p className="text-muted-foreground">
+                  Descarga un ejemplo de la estructura JSON
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                Descargar
+              </Button>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label>Subir archivo JSON</Label>
+              <Input
+                type="file"
+                accept=".json"
+                onChange={handleFileUpload}
+                className="cursor-pointer"
+              />
+            </div>
+
+            {/* JSON Input */}
+            <div className="space-y-2">
+              <Label>O pega el JSON directamente</Label>
+              <Textarea
+                value={importJson}
+                onChange={(e) => setImportJson(e.target.value)}
+                placeholder={`{
+  "title": "Nombre del Curso",
+  "slug": "nombre-del-curso",
+  "description": "Descripción del curso",
+  "level": "BEGINNER",
+  "category": "MARKETING",
+  "modules": [
+    {
+      "title": "Módulo 1",
+      "lessons": [
+        {
+          "title": "Lección 1",
+          "videoUrl": "https://youtube.com/watch?v=..."
+        }
+      ]
+    }
+  ]
+}`}
+                rows={12}
+                className="font-mono text-sm"
+              />
+            </div>
+
+            {/* Import Result */}
+            {importResult && (
+              <div
+                className={`p-4 rounded-lg ${
+                  importResult.imported > 0
+                    ? "bg-green-500/10 border border-green-500/20"
+                    : "bg-red-500/10 border border-red-500/20"
+                }`}
+              >
+                <p className="font-medium">
+                  {importResult.imported > 0
+                    ? `Se importaron ${importResult.imported} curso(s) correctamente`
+                    : "No se pudo importar ningún curso"}
+                </p>
+                {importResult.failed > 0 && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {importResult.failed} curso(s) fallaron
+                  </p>
+                )}
+                {importResult.errors && importResult.errors.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {importResult.errors.map((err, i) => (
+                      <p key={i} className="text-sm text-red-500">
+                        {err.title}: {err.error}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsImportOpen(false);
+                setImportJson("");
+                setImportResult(null);
+              }}
+            >
+              Cerrar
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={isImporting || !importJson.trim()}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Importando...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importar
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
