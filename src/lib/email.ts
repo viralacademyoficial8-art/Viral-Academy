@@ -333,3 +333,124 @@ export async function sendCourseCompletedEmail(
     ...template,
   });
 }
+
+// Password Reset Email
+interface PasswordResetEmailParams {
+  to: string;
+  resetUrl: string;
+  userName: string;
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  resetUrl,
+  userName,
+}: PasswordResetEmailParams) {
+  return sendEmail({
+    to,
+    subject: "Recupera tu contraseña - Viral Academy",
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recuperar contraseña</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0a0a0a;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #171717; border-radius: 12px; overflow: hidden;">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 32px 32px 24px; text-align: center;">
+              <h1 style="color: #d4ff00; margin: 0; font-size: 24px;">Viral Academy</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 0 32px 32px;">
+              <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #ffffff; text-align: center;">
+                Recupera tu contraseña
+              </h2>
+
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #a1a1aa; text-align: center;">
+                Hola ${userName},
+              </p>
+
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #a1a1aa; text-align: center;">
+                Recibimos una solicitud para restablecer la contraseña de tu cuenta en Viral Academy. Haz clic en el botón de abajo para crear una nueva contraseña.
+              </p>
+
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 24px;">
+                    <a href="${resetUrl}" style="display: inline-block; padding: 14px 32px; background-color: #d4ff00; color: #0a0a0a; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                      Restablecer contraseña
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #71717a; text-align: center;">
+                Este enlace expirará en 1 hora.
+              </p>
+
+              <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #71717a; text-align: center;">
+                Si no solicitaste restablecer tu contraseña, puedes ignorar este correo de forma segura.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 32px;">
+              <div style="height: 1px; background-color: #27272a;"></div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px;">
+              <p style="margin: 0 0 8px; font-size: 12px; color: #52525b; text-align: center;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #3b82f6; text-align: center; word-break: break-all;">
+                ${resetUrl}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 0 32px 32px;">
+              <p style="margin: 0; font-size: 12px; color: #52525b; text-align: center;">
+                © ${new Date().getFullYear()} Viral Academy. Todos los derechos reservados.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `,
+    text: `
+Hola ${userName},
+
+Recibimos una solicitud para restablecer la contraseña de tu cuenta en Viral Academy.
+
+Haz clic en el siguiente enlace para crear una nueva contraseña:
+${resetUrl}
+
+Este enlace expirará en 1 hora.
+
+Si no solicitaste restablecer tu contraseña, puedes ignorar este correo de forma segura.
+
+© ${new Date().getFullYear()} Viral Academy. Todos los derechos reservados.
+    `,
+  });
+}
