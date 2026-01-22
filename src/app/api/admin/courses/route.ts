@@ -80,3 +80,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Error al crear curso" }, { status: 500 });
   }
 }
+
+// DELETE all courses (dangerous - requires confirmation)
+export async function DELETE(request: NextRequest) {
+  try {
+    const admin = await checkAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    // Check for confirmation header
+    const confirmation = request.headers.get("X-Confirm-Delete-All");
+    if (confirmation !== "DELETE_ALL_COURSES") {
+      return NextResponse.json(
+        { error: "Se requiere confirmación para eliminar todos los cursos" },
+        { status: 400 }
+      );
+    }
+
+    // Delete all related data first due to potential cascade issues
+    // Order matters: lessons -> modules -> enrollments -> progress -> courses
+    await prisma.lessonProgress.deleteMany({});
+    await prisma.lesson.deleteMany({});
+    await prisma.module.deleteMany({});
+    await prisma.enrollment.deleteMany({});
+    await prisma.resource.deleteMany({});
+    await prisma.course.deleteMany({});
+
+    return NextResponse.json({
+      success: true,
+      message: "Todos los cursos han sido eliminados"
+    });
+  } catch (error) {
+    console.error("Error deleting all courses:", error);
+    return NextResponse.json(
+      { error: "Error al eliminar cursos" },
+      { status: 500 }
+    );
+  }
+}

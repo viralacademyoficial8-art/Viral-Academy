@@ -47,17 +47,62 @@ export function CoursesClient({ courses }: CoursesClientProps) {
         <p className="text-muted-foreground">Formación práctica, sin teoría innecesaria.</p>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar cursos..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+      {/* Search and Filters */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="space-y-4"
+      >
+        {/* Search Bar */}
+        <div className="relative max-w-xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            placeholder="Buscar cursos por nombre..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-12 h-12 text-base bg-card border-2 focus:border-primary"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <span className="sr-only">Limpiar búsqueda</span>
+              ×
+            </button>
+          )}
         </div>
+
+        {/* Category Filters */}
         <div className="flex flex-wrap gap-2">
-          <Button variant={selectedCategory === null ? "default" : "outline"} size="sm" onClick={() => setSelectedCategory(null)}>Todos</Button>
+          <Button
+            variant={selectedCategory === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory(null)}
+            className="rounded-full"
+          >
+            Todos
+          </Button>
           {Object.entries(COURSE_CATEGORIES).map(([key, label]) => (
-            <Button key={key} variant={selectedCategory === key ? "default" : "outline"} size="sm" onClick={() => setSelectedCategory(selectedCategory === key ? null : key)}>{label}</Button>
+            <Button
+              key={key}
+              variant={selectedCategory === key ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(selectedCategory === key ? null : key)}
+              className="rounded-full"
+            >
+              {label}
+            </Button>
           ))}
         </div>
+
+        {/* Results count */}
+        <p className="text-sm text-muted-foreground">
+          {filteredCourses.length} {filteredCourses.length === 1 ? "curso encontrado" : "cursos encontrados"}
+          {searchQuery && ` para "${searchQuery}"`}
+          {selectedCategory && ` en ${COURSE_CATEGORIES[selectedCategory as keyof typeof COURSE_CATEGORIES]}`}
+        </p>
       </motion.div>
 
       {filteredCourses.length === 0 ? (
