@@ -3,7 +3,9 @@
 import { signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { AuthError } from "next-auth";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 export interface RegisterData {
   email: string;
@@ -110,4 +112,138 @@ export async function loginWithGoogle() {
 
 export async function logout() {
   await signOut({ redirectTo: "/" });
+}
+
+// Password Reset Functions
+
+export async function requestPasswordReset(email: string) {
+  try {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      include: { profile: true },
+    });
+
+    // Always return success to prevent email enumeration attacks
+    if (!user) {
+      return { success: true };
+    }
+
+    // Check if user has a password (not OAuth-only user)
+    if (!user.password) {
+      return {
+        error: "Esta cuenta usa inicio de sesión con Google. No puedes restablecer la contraseña."
+      };
+    }
+
+    // Generate reset token
+    const token = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Delete any existing reset tokens for this user
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: normalizedEmail },
+    });
+
+    // Store the hashed token in the database
+    await prisma.verificationToken.create({
+      data: {
+        identifier: normalizedEmail,
+        token: hashedToken,
+        expires,
+      },
+    });
+
+    // Send email with the unhashed token
+    const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}`;
+
+    await sendPasswordResetEmail({
+      to: normalizedEmail,
+      resetUrl,
+      userName: user.profile?.firstName || "Usuario",
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Password reset request error:", error);
+    return { error: "Error al procesar la solicitud. Intenta de nuevo." };
+  }
+}
+
+export async function verifyResetToken(token: string) {
+  try {
+    // Hash the token to compare with the database
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const verificationToken = await prisma.verificationToken.findFirst({
+      where: {
+        token: hashedToken,
+        expires: { gt: new Date() },
+      },
+    });
+
+    return { valid: !!verificationToken };
+  } catch (error) {
+    console.error("Token verification error:", error);
+    return { valid: false };
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  try {
+    if (newPassword.length < 8) {
+      return { error: "La contraseña debe tener al menos 8 caracteres" };
+    }
+
+    // Hash the token to compare with the database
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Find the token and check if it's valid
+    const verificationToken = await prisma.verificationToken.findFirst({
+      where: {
+        token: hashedToken,
+        expires: { gt: new Date() },
+      },
+    });
+
+    if (!verificationToken) {
+      return { error: "El enlace ha expirado o no es válido" };
+    }
+
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: verificationToken.identifier },
+    });
+
+    if (!user) {
+      return { error: "Usuario no encontrado" };
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Update the user's password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    // Delete the used token
+    await prisma.verificationToken.delete({
+      where: {
+        identifier_token: {
+          identifier: verificationToken.identifier,
+          token: hashedToken,
+        },
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Password reset error:", error);
+    return { error: "Error al restablecer la contraseña. Intenta de nuevo." };
+  }
 }
