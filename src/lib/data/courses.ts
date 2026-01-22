@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function getCourses() {
   try {
@@ -61,6 +61,7 @@ export async function getCourseBySlug(slug: string) {
 }
 
 export async function getCoursesWithProgress(userId: string) {
+  // Get enrollments with courses in one query
   const enrollments = await prisma.enrollment.findMany({
     where: { userId },
     include: {
@@ -73,36 +74,68 @@ export async function getCoursesWithProgress(userId: string) {
     }
   });
 
-  const coursesWithProgress = await Promise.all(
-    enrollments.map(async (enrollment) => {
-      const totalLessons = enrollment.course.modules.reduce(
-        (acc, mod) => acc + mod.lessons.length,
-        0
-      );
+  if (enrollments.length === 0) {
+    return [];
+  }
 
-      const completedLessons = await prisma.lessonProgress.count({
-        where: {
-          userId,
-          completed: true,
-          lesson: {
-            module: { courseId: enrollment.course.id }
-          }
+  // Get all course IDs the user is enrolled in
+  const courseIds = enrollments.map(e => e.course.id);
+
+  // Get all completed lessons for user in enrolled courses - ONE query instead of N
+  const completedLessonsData = await prisma.lessonProgress.groupBy({
+    by: ["lessonId"],
+    where: {
+      userId,
+      completed: true,
+      lesson: {
+        module: {
+          courseId: { in: courseIds }
         }
+      }
+    },
+    _count: true
+  });
+
+  // Get lesson to course mapping
+  const lessonToCourse = new Map<string, string>();
+  enrollments.forEach(enrollment => {
+    enrollment.course.modules.forEach(mod => {
+      mod.lessons.forEach(lesson => {
+        lessonToCourse.set(lesson.id, enrollment.course.id);
       });
+    });
+  });
 
-      const progress = totalLessons > 0
-        ? Math.round((completedLessons / totalLessons) * 100)
-        : 0;
+  // Count completed lessons per course
+  const completedPerCourse = new Map<string, number>();
+  completedLessonsData.forEach(item => {
+    const courseId = lessonToCourse.get(item.lessonId);
+    if (courseId) {
+      completedPerCourse.set(courseId, (completedPerCourse.get(courseId) || 0) + 1);
+    }
+  });
 
-      return {
-        ...enrollment.course,
-        enrolled: true,
-        progress,
-        startedAt: enrollment.startedAt,
-        completedAt: enrollment.completedAt
-      };
-    })
-  );
+  // Build the result
+  const coursesWithProgress = enrollments.map((enrollment) => {
+    const totalLessons = enrollment.course.modules.reduce(
+      (acc, mod) => acc + mod.lessons.length,
+      0
+    );
+
+    const completedLessons = completedPerCourse.get(enrollment.course.id) || 0;
+
+    const progress = totalLessons > 0
+      ? Math.round((completedLessons / totalLessons) * 100)
+      : 0;
+
+    return {
+      ...enrollment.course,
+      enrolled: true,
+      progress,
+      startedAt: enrollment.startedAt,
+      completedAt: enrollment.completedAt
+    };
+  });
 
   return coursesWithProgress;
 }
@@ -137,44 +170,78 @@ export async function getAllCoursesWithUserStatus(userId?: string) {
       }));
     }
 
-    // Get user's enrollments
+    // Get user's enrollments - ONE query
     const enrollments = await prisma.enrollment.findMany({
       where: { userId },
       select: { courseId: true }
     });
     const enrolledCourseIds = new Set(enrollments.map(e => e.courseId));
 
-    // Get progress for each enrolled course
-    const coursesWithStatus = await Promise.all(
-      courses.map(async (course) => {
-        const isEnrolled = enrolledCourseIds.has(course.id);
+    // If user has no enrollments, return early
+    if (enrolledCourseIds.size === 0) {
+      return courses.map(course => ({
+        ...course,
+        enrolled: false,
+        progress: 0
+      }));
+    }
 
-        if (!isEnrolled) {
-          return { ...course, enrolled: false, progress: 0 };
-        }
-
-        const totalLessons = course.modules.reduce(
-          (acc, mod) => acc + mod.lessons.length,
-          0
-        );
-
-        const completedLessons = await prisma.lessonProgress.count({
-          where: {
-            userId,
-            completed: true,
-            lesson: {
-              module: { courseId: course.id }
-            }
-          }
+    // Build lesson to course mapping for enrolled courses only
+    const lessonToCourse = new Map<string, string>();
+    courses.forEach(course => {
+      if (enrolledCourseIds.has(course.id)) {
+        course.modules.forEach(mod => {
+          mod.lessons.forEach(lesson => {
+            lessonToCourse.set(lesson.id, course.id);
+          });
         });
+      }
+    });
 
-        const progress = totalLessons > 0
-          ? Math.round((completedLessons / totalLessons) * 100)
-          : 0;
+    // Get ALL completed lessons for user in enrolled courses - ONE query instead of N
+    const completedLessonsData = await prisma.lessonProgress.findMany({
+      where: {
+        userId,
+        completed: true,
+        lesson: {
+          module: {
+            courseId: { in: Array.from(enrolledCourseIds) }
+          }
+        }
+      },
+      select: { lessonId: true }
+    });
 
-        return { ...course, enrolled: true, progress };
-      })
-    );
+    // Count completed lessons per course
+    const completedPerCourse = new Map<string, number>();
+    completedLessonsData.forEach(item => {
+      const courseId = lessonToCourse.get(item.lessonId);
+      if (courseId) {
+        completedPerCourse.set(courseId, (completedPerCourse.get(courseId) || 0) + 1);
+      }
+    });
+
+    // Build the result - NO additional queries
+    const coursesWithStatus = courses.map((course) => {
+      const isEnrolled = enrolledCourseIds.has(course.id);
+
+      if (!isEnrolled) {
+        return { ...course, enrolled: false, progress: 0 };
+      }
+
+      const totalLessons = course.modules.reduce(
+        (acc, mod) => acc + mod.lessons.length,
+        0
+      );
+
+      const completedLessons = completedPerCourse.get(course.id) || 0;
+
+      const progress = totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
+
+      return { ...course, enrolled: true, progress };
+    });
 
     return coursesWithStatus;
   } catch (error) {
