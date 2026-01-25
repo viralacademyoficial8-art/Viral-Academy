@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { User, Mail, Calendar, Award, BookOpen, Settings, AlertCircle } from "lucide-react";
+import { User, Mail, Calendar, Award, BookOpen, Settings, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,37 +18,55 @@ export default async function PerfilPage() {
     redirect("/auth/login");
   }
 
-  const [user, stats] = await Promise.all([
+  const [dbUser, stats] = await Promise.all([
     getUserById(session.user.id),
     getUserStats(session.user.id),
   ]);
 
-  // If user data couldn't be fetched, show error instead of redirecting
-  if (!user) {
-    return (
-      <div className="space-y-8">
-        <h1 className="text-2xl md:text-3xl font-bold">Mi Perfil</h1>
-        <Card>
-          <CardContent className="py-12 text-center">
-            <AlertCircle className="w-12 h-12 mx-auto text-destructive mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Error al cargar el perfil</h2>
-            <p className="text-muted-foreground mb-4">
-              No pudimos cargar tu información. Por favor intenta de nuevo.
-            </p>
-            <Button asChild>
-              <Link href="/app/perfil">Reintentar</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Use session data as fallback if DB query fails
+  const user = dbUser || {
+    id: session.user.id,
+    email: session.user.email || "usuario@email.com",
+    role: (session.user.role as string) || "STUDENT",
+    createdAt: new Date(),
+    profile: {
+      displayName: session.user.name,
+      avatar: session.user.image,
+      bio: null,
+    },
+    subscription: null,
+  };
 
+  const isUsingFallback = !dbUser;
+  const isAdmin = user.role === "ADMIN";
   const subscriptionStatus = user.subscription?.status;
-  const isActive = subscriptionStatus === "ACTIVE" || user.role === "ADMIN";
+  const isActive = subscriptionStatus === "ACTIVE" || isAdmin;
 
   return (
     <div className="space-y-8">
+      {/* Warning if using fallback data */}
+      {isUsingFallback && (
+        <Card className="border-yellow-500/50 bg-yellow-500/10">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Información limitada</p>
+                <p className="text-xs text-muted-foreground">
+                  Algunos datos no pudieron cargarse. Mostrando información básica de tu sesión.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/app/perfil">
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Reintentar
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl md:text-3xl font-bold">Mi Perfil</h1>
         <Button variant="outline" asChild>
@@ -172,19 +190,21 @@ export default async function PerfilPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Miembro desde</p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(user.createdAt).toLocaleDateString("es-MX", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </p>
+              {!isUsingFallback && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Miembro desde</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(user.createdAt).toLocaleDateString("es-MX", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
               {user.subscription?.currentPeriodEnd && (
                 <div className="flex items-center gap-3">
                   <Award className="w-5 h-5 text-muted-foreground" />
