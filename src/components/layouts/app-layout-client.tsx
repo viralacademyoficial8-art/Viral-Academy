@@ -49,7 +49,7 @@ export function AppLayoutClient({ children, user }: AppLayoutClientProps) {
       {/* Mobile Sidebar */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent side="left" className="p-0 w-[260px]">
-          <SidebarApp navigation={studentSidebarNav} user={user || undefined} />
+          <SidebarApp navigation={studentSidebarNav} user={user || undefined} isMobile />
         </SheetContent>
       </Sheet>
 
