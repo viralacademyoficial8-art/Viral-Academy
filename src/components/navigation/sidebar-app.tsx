@@ -30,9 +30,10 @@ interface UserData {
 interface SidebarAppProps {
   navigation?: NavSection[];
   user?: UserData;
+  isMobile?: boolean;
 }
 
-export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppProps) {
+export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = false }: SidebarAppProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
 
@@ -48,11 +49,15 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
     await signOut({ callbackUrl: "/" });
   };
 
+  // For mobile, don't use collapsed state and don't use fixed positioning
+  const isCollapsed = isMobile ? false : collapsed;
+
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen border-r border-sidebar-border bg-sidebar transition-all duration-300",
-        collapsed ? "w-[70px]" : "w-[260px]"
+        "h-screen border-r border-sidebar-border bg-sidebar transition-all duration-300",
+        isMobile ? "w-full" : "fixed left-0 top-0 z-40",
+        !isMobile && (isCollapsed ? "w-[70px]" : "w-[260px]")
       )}
     >
       <div className="flex h-full flex-col">
@@ -62,7 +67,7 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-hover shadow-lg shadow-primary/25 flex-shrink-0">
               <Zap className="h-5 w-5 text-white" />
             </div>
-            {!collapsed && (
+            {!isCollapsed && (
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -72,18 +77,20 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
               </motion.span>
             )}
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 hidden lg:flex"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hidden lg:flex"
+              onClick={() => setCollapsed(!collapsed)}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Navigation */}
@@ -96,7 +103,7 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
                     {section.title}
                   </h4>
                 )}
-                {section.title && collapsed && (
+                {section.title && isCollapsed && (
                   <Separator className="my-2" />
                 )}
                 <div className="space-y-1">
@@ -113,7 +120,7 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
                           isActive
                             ? "bg-sidebar-accent text-sidebar-accent-foreground"
                             : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-                          collapsed && "justify-center px-2"
+                          isCollapsed && "justify-center px-2"
                         )}
                       >
                         {Icon && (
@@ -147,7 +154,7 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                 "bg-gradient-to-r from-primary/10 to-primary/5 text-primary hover:from-primary/20 hover:to-primary/10",
-                collapsed && "justify-center px-2"
+                isCollapsed && "justify-center px-2"
               )}
             >
               <Shield className="h-5 w-5 flex-shrink-0" />
@@ -162,14 +169,14 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
             href="/app/perfil"
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-sidebar-accent/50 transition-colors",
-              collapsed && "justify-center px-2"
+              isCollapsed && "justify-center px-2"
             )}
           >
             <Avatar className="h-9 w-9 flex-shrink-0">
               {user?.image && <AvatarImage src={user.image} alt={displayName} />}
               <AvatarFallback className="text-sm">{initials}</AvatarFallback>
             </Avatar>
-            {!collapsed && (
+            {!isCollapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{displayName}</p>
                 <p className="text-xs text-muted-foreground truncate">
@@ -184,10 +191,10 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
           </Link>
           <Button
             variant="ghost"
-            size={collapsed ? "icon" : "default"}
+            size={isCollapsed ? "icon" : "default"}
             className={cn(
               "w-full text-muted-foreground hover:text-foreground",
-              collapsed && "px-2"
+              isCollapsed && "px-2"
             )}
             onClick={handleLogout}
           >
