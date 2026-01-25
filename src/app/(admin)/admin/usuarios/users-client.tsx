@@ -2,11 +2,21 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown, Loader2, Calendar, BookOpen, Award } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +62,14 @@ export function UsersClient({ users, stats }: UsersClientProps) {
   const [roleFilter, setRoleFilter] = React.useState<string | null>(null);
   const [subscriptionFilter, setSubscriptionFilter] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState<string | null>(null);
+
+  // Modal states
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
+  const [profileModalOpen, setProfileModalOpen] = React.useState(false);
+  const [emailModalOpen, setEmailModalOpen] = React.useState(false);
+  const [emailSubject, setEmailSubject] = React.useState("");
+  const [emailMessage, setEmailMessage] = React.useState("");
+  const [sendingEmail, setSendingEmail] = React.useState(false);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -132,6 +150,48 @@ export function UsersClient({ users, stats }: UsersClientProps) {
       console.error("Error toggling active:", error);
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleViewProfile = (user: User) => {
+    setSelectedUser(user);
+    setProfileModalOpen(true);
+  };
+
+  const handleOpenEmailModal = (user: User) => {
+    setSelectedUser(user);
+    setEmailSubject("");
+    setEmailMessage("");
+    setEmailModalOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!selectedUser || !emailSubject.trim() || !emailMessage.trim()) return;
+
+    setSendingEmail(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}/email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: emailSubject,
+          message: emailMessage,
+        }),
+      });
+
+      if (res.ok) {
+        setEmailModalOpen(false);
+        setEmailSubject("");
+        setEmailMessage("");
+        setSelectedUser(null);
+      } else {
+        const data = await res.json();
+        console.error("Error sending email:", data.error);
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -325,11 +385,11 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewProfile(user)}>
                             <UserCog className="h-4 w-4 mr-2" />
                             Ver perfil
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenEmailModal(user)}>
                             <Mail className="h-4 w-4 mr-2" />
                             Enviar email
                           </DropdownMenuItem>
@@ -393,6 +453,136 @@ export function UsersClient({ users, stats }: UsersClientProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Profile Modal */}
+      <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Perfil de Usuario</DialogTitle>
+            <DialogDescription>
+              Información detallada del usuario
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-medium">
+                  {selectedUser.name?.charAt(0) || selectedUser.email.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedUser.name || "Sin nombre"}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Rol</p>
+                  <div>{getRoleBadge(selectedUser.role)}</div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Estado</p>
+                  {selectedUser.active ? (
+                    <Badge className="bg-green-500">Activo</Badge>
+                  ) : (
+                    <Badge variant="destructive">Inactivo</Badge>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Suscripción</p>
+                  <div>{getSubscriptionBadge(selectedUser.subscriptionStatus)}</div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Registro
+                  </p>
+                  <p className="text-sm">{formatDate(selectedUser.createdAt)}</p>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{selectedUser.enrollmentsCount}</p>
+                      <p className="text-xs text-muted-foreground">Cursos inscritos</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{selectedUser.certificatesCount}</p>
+                      <p className="text-xs text-muted-foreground">Certificados</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileModalOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Modal */}
+      <Dialog open={emailModalOpen} onOpenChange={setEmailModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Enviar Email</DialogTitle>
+            <DialogDescription>
+              {selectedUser && (
+                <>Enviar un correo a <strong>{selectedUser.name || selectedUser.email}</strong></>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email-subject">Asunto</Label>
+              <Input
+                id="email-subject"
+                placeholder="Asunto del correo"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-message">Mensaje</Label>
+              <Textarea
+                id="email-message"
+                placeholder="Escribe tu mensaje aquí..."
+                rows={6}
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailModalOpen(false)} disabled={sendingEmail}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={sendingEmail || !emailSubject.trim() || !emailMessage.trim()}
+            >
+              {sendingEmail ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Enviar
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
