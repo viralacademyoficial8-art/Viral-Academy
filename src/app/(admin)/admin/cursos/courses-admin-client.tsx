@@ -16,7 +16,11 @@ import {
   AlertTriangle,
   Loader2,
   Upload,
+  Image as ImageIcon,
+  Link,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,7 +132,10 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
     level: "BEGINNER",
     category: "MARKETING",
     mentorId: mentors[0]?.id || "",
+    thumbnail: "",
   });
+  const [thumbnailMode, setThumbnailMode] = useState<"url" | "upload">("url");
+  const [isUploading, setIsUploading] = useState(false);
 
   const filteredCourses = courses.filter(
     (course) =>
@@ -153,6 +160,49 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
     });
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side validation
+    const allowedTypes = ["image/webp", "image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Formato no permitido. Usa WebP, JPEG o PNG.");
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSize) {
+      toast.error(`Archivo muy grande. Máximo 2MB. Tu archivo: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setFormData({ ...formData, thumbnail: data.url });
+        toast.success("Imagen subida correctamente");
+      } else {
+        toast.error(data.error || "Error al subir la imagen");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Error de conexión al subir la imagen");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleCreate = async () => {
     setIsLoading(true);
     try {
@@ -171,8 +221,13 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
           level: "BEGINNER",
           category: "MARKETING",
           mentorId: mentors[0]?.id || "",
+          thumbnail: "",
         });
+        toast.success("Curso creado correctamente");
         router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al crear el curso");
       }
     } catch (error) {
       console.error("Error creating course:", error);
@@ -520,7 +575,7 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Crear Nuevo Curso</DialogTitle>
             <DialogDescription>
@@ -609,6 +664,77 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Image Upload Section */}
+            <div className="space-y-2">
+              <Label>Imagen de Portada</Label>
+              <div className="flex gap-2 mb-2">
+                <Button
+                  type="button"
+                  variant={thumbnailMode === "url" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setThumbnailMode("url")}
+                >
+                  <Link className="h-4 w-4 mr-1" />
+                  URL
+                </Button>
+                <Button
+                  type="button"
+                  variant={thumbnailMode === "upload" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setThumbnailMode("upload")}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  Subir
+                </Button>
+              </div>
+
+              {thumbnailMode === "url" ? (
+                <Input
+                  placeholder="https://ejemplo.com/imagen.webp"
+                  value={formData.thumbnail}
+                  onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                />
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".webp,.jpg,.jpeg,.png"
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
+                      className="file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-primary file:text-primary-foreground"
+                    />
+                    {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Formatos: WebP, JPEG, PNG | Máximo: 2MB | Recomendado: WebP para mejor rendimiento
+                  </p>
+                </div>
+              )}
+
+              {formData.thumbnail && (
+                <div className="relative mt-2">
+                  <img
+                    src={formData.thumbnail}
+                    alt="Vista previa"
+                    className="w-full h-32 object-cover rounded-md border"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/placeholder-course.png";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6"
+                    onClick={() => setFormData({ ...formData, thumbnail: "" })}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
