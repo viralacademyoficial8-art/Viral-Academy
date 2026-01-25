@@ -14,6 +14,7 @@ interface UserData {
   image?: string | null;
   subscriptionStatus?: string | null;
   needsOnboarding?: boolean;
+  role?: string | null;
 }
 
 interface AppLayoutClientProps {

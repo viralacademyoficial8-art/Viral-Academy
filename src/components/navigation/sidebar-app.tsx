@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ interface UserData {
   email?: string | null;
   image?: string | null;
   subscriptionStatus?: string | null;
+  role?: string | null;
 }
 
 interface SidebarAppProps {
@@ -136,6 +138,23 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
             ))}
           </nav>
         </ScrollArea>
+
+        {/* Admin Link for Admins */}
+        {user?.role === "ADMIN" && (
+          <div className="border-t border-sidebar-border p-4">
+            <Link
+              href="/admin"
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                "bg-gradient-to-r from-primary/10 to-primary/5 text-primary hover:from-primary/20 hover:to-primary/10",
+                collapsed && "justify-center px-2"
+              )}
+            >
+              <Shield className="h-5 w-5 flex-shrink-0" />
+              {!collapsed && <span>Panel Admin</span>}
+            </Link>
+          </div>
+        )}
 
         {/* User Section */}
         <div className="border-t border-sidebar-border p-4 space-y-2">
