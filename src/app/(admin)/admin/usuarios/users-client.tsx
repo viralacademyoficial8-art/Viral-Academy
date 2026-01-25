@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown, Loader2, Calendar, BookOpen, Award, Trash2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -130,11 +131,18 @@ export function UsersClient({ users, stats }: UsersClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
       });
+
+      const data = await res.json();
+
       if (res.ok) {
+        toast.success("Rol actualizado correctamente");
         router.refresh();
+      } else {
+        toast.error(data.error || "Error al cambiar el rol");
       }
     } catch (error) {
       console.error("Error updating role:", error);
+      toast.error("Error de conexión al servidor");
     } finally {
       setLoading(null);
     }
@@ -148,11 +156,18 @@ export function UsersClient({ users, stats }: UsersClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !currentActive }),
       });
+
+      const data = await res.json();
+
       if (res.ok) {
+        toast.success(currentActive ? "Cuenta desactivada" : "Cuenta activada");
         router.refresh();
+      } else {
+        toast.error(data.error || "Error al actualizar el estado");
       }
     } catch (error) {
       console.error("Error toggling active:", error);
+      toast.error("Error de conexión al servidor");
     } finally {
       setLoading(null);
     }
@@ -185,16 +200,18 @@ export function UsersClient({ users, stats }: UsersClientProps) {
       });
 
       if (res.ok) {
+        toast.success("Email enviado correctamente");
         setEmailModalOpen(false);
         setEmailSubject("");
         setEmailMessage("");
         setSelectedUser(null);
       } else {
         const data = await res.json();
-        console.error("Error sending email:", data.error);
+        toast.error(data.error || "Error al enviar el email");
       }
     } catch (error) {
       console.error("Error sending email:", error);
+      toast.error("Error de conexión al servidor");
     } finally {
       setSendingEmail(false);
     }
@@ -219,16 +236,18 @@ export function UsersClient({ users, stats }: UsersClientProps) {
       });
 
       if (res.ok) {
+        toast.success("Usuario eliminado correctamente");
         setDeleteModalOpen(false);
         setDeleteConfirmation("");
         setSelectedUser(null);
         router.refresh();
       } else {
         const data = await res.json();
-        console.error("Error deleting user:", data.error);
+        toast.error(data.error || "Error al eliminar el usuario");
       }
     } catch (error) {
       console.error("Error deleting user:", error);
+      toast.error("Error de conexión al servidor");
     } finally {
       setDeleting(false);
     }
