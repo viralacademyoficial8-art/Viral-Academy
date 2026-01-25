@@ -62,7 +62,7 @@ export function NewResourceClient({ courses }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          courseId: formData.courseId || null,
+          courseId: formData.courseId && formData.courseId !== "none" ? formData.courseId : null,
         }),
       });
 
@@ -190,7 +190,7 @@ export function NewResourceClient({ courses }: Props) {
                   <SelectValue placeholder="Selecciona un curso (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Ninguno (recurso general)</SelectItem>
+                  <SelectItem value="none">Ninguno (recurso general)</SelectItem>
                   {courses.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
