@@ -173,7 +173,11 @@ export function SidebarApp({ navigation = studentSidebarNav, user }: SidebarAppP
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{displayName}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {user?.subscriptionStatus === "ACTIVE" ? "Membresía activa" : "Sin membresía"}
+                  {user?.role === "ADMIN"
+                    ? "Administrador"
+                    : user?.subscriptionStatus === "ACTIVE"
+                      ? "Membresía activa"
+                      : "Sin membresía"}
                 </p>
               </div>
             )}
