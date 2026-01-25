@@ -11,6 +11,7 @@ async function getUsers() {
         id: true,
         email: true,
         role: true,
+        active: true,
         createdAt: true,
         profile: {
           select: {
@@ -40,7 +41,7 @@ async function getUsers() {
       name: user.profile?.displayName || user.profile?.firstName || null,
       avatar: user.profile?.avatar || null,
       role: user.role,
-      active: true, // Default to true since we can't query this field yet
+      active: user.active,
       createdAt: user.createdAt.toISOString(),
       subscriptionStatus: user.subscription?.status || null,
       subscriptionEnd: user.subscription?.currentPeriodEnd?.toISOString() || null,
