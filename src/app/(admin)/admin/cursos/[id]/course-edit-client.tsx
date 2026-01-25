@@ -137,6 +137,29 @@ export function CourseEditClient({ course, mentors }: Props) {
     published: true,
   });
 
+  // Module creation dialog
+  const [isCreateModuleOpen, setIsCreateModuleOpen] = useState(false);
+  const [isCreatingModule, setIsCreatingModule] = useState(false);
+  const [moduleFormData, setModuleFormData] = useState({
+    title: "",
+    description: "",
+  });
+
+  // Lesson creation dialog
+  const [isCreateLessonOpen, setIsCreateLessonOpen] = useState(false);
+  const [isCreatingLesson, setIsCreatingLesson] = useState(false);
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [newLessonFormData, setNewLessonFormData] = useState({
+    title: "",
+    videoUrl: "",
+    published: true,
+  });
+  const [videoUrlError, setVideoUrlError] = useState("");
+
+  // Delete states
+  const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
+  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
+
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) =>
       prev.includes(moduleId)
@@ -278,6 +301,12 @@ export function CourseEditClient({ course, mentors }: Props) {
   const handleSaveLesson = async () => {
     if (!editingLesson) return;
 
+    // Validate YouTube URL if provided
+    if (lessonFormData.videoUrl && !isValidYouTubeUrl(lessonFormData.videoUrl)) {
+      toast.error("La URL debe ser de YouTube (youtube.com o youtu.be)");
+      return;
+    }
+
     try {
       const res = await fetch(`/api/admin/lessons/${editingLesson.id}`, {
         method: "PATCH",
@@ -287,11 +316,159 @@ export function CourseEditClient({ course, mentors }: Props) {
 
       if (res.ok) {
         setEditingLesson(null);
+        toast.success("Lección actualizada");
         router.refresh();
       }
     } catch (error) {
       console.error("Error saving lesson:", error);
+      toast.error("Error al guardar la lección");
     }
+  };
+
+  // Validate YouTube URL
+  const isValidYouTubeUrl = (url: string): boolean => {
+    if (!url) return true; // Empty is allowed
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w-]+/;
+    return youtubeRegex.test(url);
+  };
+
+  // Create module
+  const handleCreateModule = async () => {
+    if (!moduleFormData.title.trim()) {
+      toast.error("El título del módulo es requerido");
+      return;
+    }
+
+    setIsCreatingModule(true);
+    try {
+      const res = await fetch("/api/admin/modules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.id,
+          title: moduleFormData.title,
+          description: moduleFormData.description || null,
+        }),
+      });
+
+      if (res.ok) {
+        setIsCreateModuleOpen(false);
+        setModuleFormData({ title: "", description: "" });
+        toast.success("Módulo creado correctamente");
+        router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al crear el módulo");
+      }
+    } catch (error) {
+      console.error("Error creating module:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setIsCreatingModule(false);
+    }
+  };
+
+  // Create lesson
+  const handleCreateLesson = async () => {
+    if (!newLessonFormData.title.trim()) {
+      toast.error("El título de la lección es requerido");
+      return;
+    }
+
+    if (newLessonFormData.videoUrl && !isValidYouTubeUrl(newLessonFormData.videoUrl)) {
+      setVideoUrlError("La URL debe ser de YouTube (youtube.com o youtu.be)");
+      return;
+    }
+
+    if (!selectedModuleId) {
+      toast.error("Selecciona un módulo");
+      return;
+    }
+
+    setIsCreatingLesson(true);
+    try {
+      const res = await fetch("/api/admin/lessons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moduleId: selectedModuleId,
+          title: newLessonFormData.title,
+          videoUrl: newLessonFormData.videoUrl || null,
+          published: newLessonFormData.published,
+        }),
+      });
+
+      if (res.ok) {
+        setIsCreateLessonOpen(false);
+        setSelectedModuleId(null);
+        setNewLessonFormData({ title: "", videoUrl: "", published: true });
+        setVideoUrlError("");
+        toast.success("Lección creada correctamente");
+        router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al crear la lección");
+      }
+    } catch (error) {
+      console.error("Error creating lesson:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setIsCreatingLesson(false);
+    }
+  };
+
+  // Delete module
+  const handleDeleteModule = async (moduleId: string) => {
+    setDeletingModuleId(moduleId);
+    try {
+      const res = await fetch(`/api/admin/modules/${moduleId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Módulo eliminado");
+        router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al eliminar el módulo");
+      }
+    } catch (error) {
+      console.error("Error deleting module:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setDeletingModuleId(null);
+    }
+  };
+
+  // Delete lesson
+  const handleDeleteLesson = async (lessonId: string) => {
+    setDeletingLessonId(lessonId);
+    try {
+      const res = await fetch(`/api/admin/lessons/${lessonId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Lección eliminada");
+        router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al eliminar la lección");
+      }
+    } catch (error) {
+      console.error("Error deleting lesson:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setDeletingLessonId(null);
+    }
+  };
+
+  // Open lesson creation dialog for specific module
+  const openCreateLessonDialog = (moduleId: string) => {
+    setSelectedModuleId(moduleId);
+    setNewLessonFormData({ title: "", videoUrl: "", published: true });
+    setVideoUrlError("");
+    setIsCreateLessonOpen(true);
   };
 
   const totalLessons = course.modules.reduce(
@@ -551,12 +728,22 @@ export function CourseEditClient({ course, mentors }: Props) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Modulos y Lecciones</CardTitle>
+              <Button size="sm" onClick={() => setIsCreateModuleOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Nuevo Módulo
+              </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {course.modules.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Este curso no tiene modulos
-                </p>
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">
+                    Este curso no tiene módulos
+                  </p>
+                  <Button variant="outline" onClick={() => setIsCreateModuleOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Crear primer módulo
+                  </Button>
+                </div>
               ) : (
                 course.modules.map((module) => (
                   <Collapsible
@@ -565,66 +752,141 @@ export function CourseEditClient({ course, mentors }: Props) {
                     onOpenChange={() => toggleModule(module.id)}
                   >
                     <div className="border rounded-lg">
-                      <CollapsibleTrigger className="w-full">
-                        <div className="flex items-center justify-between p-4 hover:bg-muted/50">
-                          <div className="flex items-center gap-3">
-                            <GripVertical className="w-4 h-4 text-muted-foreground" />
-                            {expandedModules.includes(module.id) ? (
-                              <ChevronDown className="w-4 h-4" />
+                      <div className="flex items-center justify-between p-4 hover:bg-muted/50">
+                        <CollapsibleTrigger className="flex items-center gap-3 flex-1">
+                          <GripVertical className="w-4 h-4 text-muted-foreground" />
+                          {expandedModules.includes(module.id) ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                          <span className="font-medium">{module.title}</span>
+                          <Badge variant="outline" className="ml-2">
+                            {module.lessons.length} lecciones
+                          </Badge>
+                        </CollapsibleTrigger>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openCreateLessonDialog(module.id);
+                            }}
+                            title="Agregar lección"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`¿Eliminar el módulo "${module.title}" y todas sus lecciones?`)) {
+                                handleDeleteModule(module.id);
+                              }
+                            }}
+                            disabled={deletingModuleId === module.id}
+                            title="Eliminar módulo"
+                          >
+                            {deletingModuleId === module.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <ChevronRight className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             )}
-                            <span className="font-medium">{module.title}</span>
-                            <Badge variant="outline" className="ml-2">
-                              {module.lessons.length} lecciones
-                            </Badge>
-                          </div>
+                          </Button>
                         </div>
-                      </CollapsibleTrigger>
+                      </div>
                       <CollapsibleContent>
                         <div className="border-t px-4 py-2 space-y-1">
-                          {module.lessons.map((lesson) => (
-                            <div
-                              key={lesson.id}
-                              className="flex items-center justify-between py-2 px-3 rounded hover:bg-muted/50 group"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Play className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-sm">{lesson.title}</span>
-                                {!lesson.published && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    Borrador
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {lesson.videoUrl && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    asChild
-                                  >
-                                    <a
-                                      href={lesson.videoUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </a>
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleEditLesson(lesson)}
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
-                              </div>
+                          {module.lessons.length === 0 ? (
+                            <div className="text-center py-4">
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Este módulo no tiene lecciones
+                              </p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openCreateLessonDialog(module.id)}
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Agregar lección
+                              </Button>
                             </div>
-                          ))}
+                          ) : (
+                            <>
+                              {module.lessons.map((lesson) => (
+                                <div
+                                  key={lesson.id}
+                                  className="flex items-center justify-between py-2 px-3 rounded hover:bg-muted/50 group"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <Play className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm">{lesson.title}</span>
+                                    {!lesson.published && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        Borrador
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {lesson.videoUrl && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        asChild
+                                      >
+                                        <a
+                                          href={lesson.videoUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                        >
+                                          <Eye className="w-4 h-4" />
+                                        </a>
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleEditLesson(lesson)}
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                      onClick={() => {
+                                        if (confirm(`¿Eliminar la lección "${lesson.title}"?`)) {
+                                          handleDeleteLesson(lesson.id);
+                                        }
+                                      }}
+                                      disabled={deletingLessonId === lesson.id}
+                                    >
+                                      {deletingLessonId === lesson.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full mt-2"
+                                onClick={() => openCreateLessonDialog(module.id)}
+                              >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Agregar lección
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </CollapsibleContent>
                     </div>
@@ -705,14 +967,14 @@ export function CourseEditClient({ course, mentors }: Props) {
       <Dialog open={!!editingLesson} onOpenChange={() => setEditingLesson(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Leccion</DialogTitle>
+            <DialogTitle>Editar Lección</DialogTitle>
             <DialogDescription>
-              Modifica los detalles de la leccion
+              Modifica los detalles de la lección
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Titulo</Label>
+              <Label>Título</Label>
               <Input
                 value={lessonFormData.title}
                 onChange={(e) =>
@@ -721,7 +983,7 @@ export function CourseEditClient({ course, mentors }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label>URL del Video</Label>
+              <Label>URL del Video (YouTube)</Label>
               <Input
                 value={lessonFormData.videoUrl}
                 onChange={(e) =>
@@ -730,8 +992,11 @@ export function CourseEditClient({ course, mentors }: Props) {
                     videoUrl: e.target.value,
                   })
                 }
-                placeholder="https://youtube.com/..."
+                placeholder="https://youtube.com/watch?v=... o https://youtu.be/..."
               />
+              <p className="text-xs text-muted-foreground">
+                Solo URLs de YouTube (youtube.com o youtu.be)
+              </p>
             </div>
             <div className="flex items-center justify-between">
               <Label>Publicado</Label>
@@ -745,7 +1010,7 @@ export function CourseEditClient({ course, mentors }: Props) {
                   })
                 }
               >
-                {lessonFormData.published ? "Si" : "No"}
+                {lessonFormData.published ? "Sí" : "No"}
               </Button>
             </div>
           </div>
@@ -754,6 +1019,159 @@ export function CourseEditClient({ course, mentors }: Props) {
               Cancelar
             </Button>
             <Button onClick={handleSaveLesson}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Module Dialog */}
+      <Dialog open={isCreateModuleOpen} onOpenChange={setIsCreateModuleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear Nuevo Módulo</DialogTitle>
+            <DialogDescription>
+              Agrega un nuevo módulo al curso
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Título del Módulo *</Label>
+              <Input
+                value={moduleFormData.title}
+                onChange={(e) =>
+                  setModuleFormData({ ...moduleFormData, title: e.target.value })
+                }
+                placeholder="Ej: Introducción al Marketing Digital"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Descripción (opcional)</Label>
+              <Textarea
+                value={moduleFormData.description}
+                onChange={(e) =>
+                  setModuleFormData({ ...moduleFormData, description: e.target.value })
+                }
+                placeholder="Describe brevemente el contenido del módulo..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateModuleOpen(false);
+                setModuleFormData({ title: "", description: "" });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateModule}
+              disabled={isCreatingModule || !moduleFormData.title.trim()}
+            >
+              {isCreatingModule ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                "Crear Módulo"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Lesson Dialog */}
+      <Dialog open={isCreateLessonOpen} onOpenChange={(open) => {
+        setIsCreateLessonOpen(open);
+        if (!open) {
+          setSelectedModuleId(null);
+          setNewLessonFormData({ title: "", videoUrl: "", published: true });
+          setVideoUrlError("");
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear Nueva Lección</DialogTitle>
+            <DialogDescription>
+              Agrega una nueva lección al módulo
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Título de la Lección *</Label>
+              <Input
+                value={newLessonFormData.title}
+                onChange={(e) =>
+                  setNewLessonFormData({ ...newLessonFormData, title: e.target.value })
+                }
+                placeholder="Ej: ¿Qué es el Marketing Digital?"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>URL del Video (YouTube)</Label>
+              <Input
+                value={newLessonFormData.videoUrl}
+                onChange={(e) => {
+                  setNewLessonFormData({ ...newLessonFormData, videoUrl: e.target.value });
+                  setVideoUrlError("");
+                }}
+                placeholder="https://youtube.com/watch?v=... o https://youtu.be/..."
+                className={videoUrlError ? "border-red-500" : ""}
+              />
+              {videoUrlError ? (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {videoUrlError}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Solo URLs de YouTube (youtube.com o youtu.be)
+                </p>
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Publicar inmediatamente</Label>
+              <Button
+                variant={newLessonFormData.published ? "default" : "outline"}
+                size="sm"
+                onClick={() =>
+                  setNewLessonFormData({
+                    ...newLessonFormData,
+                    published: !newLessonFormData.published,
+                  })
+                }
+              >
+                {newLessonFormData.published ? "Sí" : "No"}
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateLessonOpen(false);
+                setSelectedModuleId(null);
+                setNewLessonFormData({ title: "", videoUrl: "", published: true });
+                setVideoUrlError("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateLesson}
+              disabled={isCreatingLesson || !newLessonFormData.title.trim()}
+            >
+              {isCreatingLesson ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                "Crear Lección"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
