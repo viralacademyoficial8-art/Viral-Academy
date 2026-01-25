@@ -157,8 +157,8 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             <CardContent>
               {data.continueLearning ? (
                 <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Course Image */}
-                  <div className="w-full sm:w-48 h-32 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {/* Course Image - Square 1:1 */}
+                  <div className="w-full sm:w-32 aspect-square rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {data.continueLearning.thumbnail ? (
                       <img
                         src={data.continueLearning.thumbnail}

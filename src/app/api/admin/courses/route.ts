@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         level: data.level,
         category: data.category,
         mentorId: data.mentorId,
+        thumbnail: data.thumbnail || null,
         outcomes: data.outcomes || [],
         published: false,
       },

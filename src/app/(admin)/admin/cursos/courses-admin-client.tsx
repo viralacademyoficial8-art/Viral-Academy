@@ -16,7 +16,11 @@ import {
   AlertTriangle,
   Loader2,
   Upload,
+  Image as ImageIcon,
+  Link,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,7 +132,12 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
     level: "BEGINNER",
     category: "MARKETING",
     mentorId: mentors[0]?.id || "",
+    thumbnail: "",
   });
+  const [thumbnailMode, setThumbnailMode] = useState<"url" | "upload">("url");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isValidatingUrl, setIsValidatingUrl] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState("");
 
   const filteredCourses = courses.filter(
     (course) =>
@@ -153,6 +162,110 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
     });
   };
 
+  // Validate image dimensions (must be square 1:1)
+  const validateImageDimensions = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        const isSquare = img.width === img.height;
+        if (!isSquare) {
+          setThumbnailError(`La imagen debe ser cuadrada (1:1). Tu imagen: ${img.width}x${img.height}px`);
+          toast.error(`La imagen debe ser cuadrada (1:1). Tu imagen: ${img.width}x${img.height}px`);
+        } else {
+          setThumbnailError("");
+        }
+        resolve(isSquare);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        setThumbnailError("No se pudo cargar la imagen para validar");
+        resolve(false);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Validate image URL dimensions
+  const validateImageUrl = async (url: string): Promise<boolean> => {
+    if (!url) return true;
+
+    setIsValidatingUrl(true);
+    setThumbnailError("");
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        setIsValidatingUrl(false);
+        const isSquare = img.width === img.height;
+        if (!isSquare) {
+          setThumbnailError(`La imagen debe ser cuadrada (1:1). La imagen es: ${img.width}x${img.height}px`);
+          toast.error(`La imagen debe ser cuadrada (1:1). La imagen es: ${img.width}x${img.height}px`);
+        } else {
+          setThumbnailError("");
+          toast.success("Imagen válida (dimensiones cuadradas)");
+        }
+        resolve(isSquare);
+      };
+      img.onerror = () => {
+        setIsValidatingUrl(false);
+        setThumbnailError("No se pudo cargar la imagen. Verifica la URL.");
+        resolve(false);
+      };
+      img.src = url;
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side validation
+    const allowedTypes = ["image/webp", "image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Formato no permitido. Usa WebP, JPEG o PNG.");
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSize) {
+      toast.error(`Archivo muy grande. Máximo 2MB. Tu archivo: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      return;
+    }
+
+    // Validate dimensions (must be square)
+    const isValidDimensions = await validateImageDimensions(file);
+    if (!isValidDimensions) {
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setFormData({ ...formData, thumbnail: data.url });
+        toast.success("Imagen subida correctamente");
+      } else {
+        toast.error(data.error || "Error al subir la imagen");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Error de conexión al subir la imagen");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleCreate = async () => {
     setIsLoading(true);
     try {
@@ -171,8 +284,14 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
           level: "BEGINNER",
           category: "MARKETING",
           mentorId: mentors[0]?.id || "",
+          thumbnail: "",
         });
+        setThumbnailError("");
+        toast.success("Curso creado correctamente");
         router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al crear el curso");
       }
     } catch (error) {
       console.error("Error creating course:", error);
@@ -520,7 +639,7 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Crear Nuevo Curso</DialogTitle>
             <DialogDescription>
@@ -610,12 +729,123 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Image Upload Section */}
+            <div className="space-y-2">
+              <Label>Imagen de Portada</Label>
+              <div className="flex gap-2 mb-2">
+                <Button
+                  type="button"
+                  variant={thumbnailMode === "url" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setThumbnailMode("url");
+                    setThumbnailError("");
+                  }}
+                >
+                  <Link className="h-4 w-4 mr-1" />
+                  URL
+                </Button>
+                <Button
+                  type="button"
+                  variant={thumbnailMode === "upload" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setThumbnailMode("upload");
+                    setThumbnailError("");
+                  }}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  Subir
+                </Button>
+              </div>
+
+              {thumbnailMode === "url" ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="https://ejemplo.com/imagen.webp"
+                      value={formData.thumbnail}
+                      onChange={(e) => {
+                        setFormData({ ...formData, thumbnail: e.target.value });
+                        setThumbnailError("");
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => validateImageUrl(formData.thumbnail)}
+                      disabled={!formData.thumbnail || isValidatingUrl}
+                    >
+                      {isValidatingUrl ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Verificar"
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Dimensiones requeridas: <strong>Cuadrada (1:1)</strong> | Ej: 1080x1080px, 800x800px
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".webp,.jpg,.jpeg,.png"
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
+                      className="file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-primary file:text-primary-foreground"
+                    />
+                    {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Formatos: WebP, JPEG, PNG | Máximo: 2MB | <strong>Dimensiones: Cuadrada (1:1)</strong> Ej: 1080x1080px
+                  </p>
+                </div>
+              )}
+
+              {thumbnailError && (
+                <div className="p-2 bg-red-500/10 border border-red-500/30 rounded-md">
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {thumbnailError}
+                  </p>
+                </div>
+              )}
+
+              {formData.thumbnail && (
+                <div className="relative mt-2">
+                  <img
+                    src={formData.thumbnail}
+                    alt="Vista previa"
+                    className="w-32 h-32 object-cover rounded-md border mx-auto"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/placeholder-course.png";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6"
+                    onClick={() => {
+                      setFormData({ ...formData, thumbnail: "" });
+                      setThumbnailError("");
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleCreate} disabled={isLoading || !formData.title}>
+            <Button onClick={handleCreate} disabled={isLoading || !formData.title || !!thumbnailError}>
               {isLoading ? "Creando..." : "Crear Curso"}
             </Button>
           </DialogFooter>

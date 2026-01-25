@@ -103,7 +103,7 @@ export function FavoritosClient({ bookmarks }: FavoritosClientProps) {
                   transition={{ delay: index * 0.05 }}
                 >
                   <Card className="overflow-hidden group">
-                    <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative">
+                    <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
                       {course.thumbnail ? (
                         <img
                           src={course.thumbnail}

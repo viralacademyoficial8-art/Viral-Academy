@@ -2,11 +2,22 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown } from "lucide-react";
+import { toast } from "sonner";
+import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown, Loader2, Calendar, BookOpen, Award, Trash2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +63,19 @@ export function UsersClient({ users, stats }: UsersClientProps) {
   const [roleFilter, setRoleFilter] = React.useState<string | null>(null);
   const [subscriptionFilter, setSubscriptionFilter] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState<string | null>(null);
+
+  // Modal states
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
+  const [profileModalOpen, setProfileModalOpen] = React.useState(false);
+  const [emailModalOpen, setEmailModalOpen] = React.useState(false);
+  const [emailSubject, setEmailSubject] = React.useState("");
+  const [emailMessage, setEmailMessage] = React.useState("");
+  const [sendingEmail, setSendingEmail] = React.useState(false);
+
+  // Delete modal states
+  const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
+  const [deleting, setDeleting] = React.useState(false);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -107,11 +131,18 @@ export function UsersClient({ users, stats }: UsersClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
       });
+
+      const data = await res.json();
+
       if (res.ok) {
+        toast.success("Rol actualizado correctamente");
         router.refresh();
+      } else {
+        toast.error(data.error || "Error al cambiar el rol");
       }
     } catch (error) {
       console.error("Error updating role:", error);
+      toast.error("Error de conexión al servidor");
     } finally {
       setLoading(null);
     }
@@ -125,13 +156,100 @@ export function UsersClient({ users, stats }: UsersClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !currentActive }),
       });
+
+      const data = await res.json();
+
       if (res.ok) {
+        toast.success(currentActive ? "Cuenta desactivada" : "Cuenta activada");
         router.refresh();
+      } else {
+        toast.error(data.error || "Error al actualizar el estado");
       }
     } catch (error) {
       console.error("Error toggling active:", error);
+      toast.error("Error de conexión al servidor");
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleViewProfile = (user: User) => {
+    setSelectedUser(user);
+    setProfileModalOpen(true);
+  };
+
+  const handleOpenEmailModal = (user: User) => {
+    setSelectedUser(user);
+    setEmailSubject("");
+    setEmailMessage("");
+    setEmailModalOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!selectedUser || !emailSubject.trim() || !emailMessage.trim()) return;
+
+    setSendingEmail(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}/email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: emailSubject,
+          message: emailMessage,
+        }),
+      });
+
+      if (res.ok) {
+        toast.success("Email enviado correctamente");
+        setEmailModalOpen(false);
+        setEmailSubject("");
+        setEmailMessage("");
+        setSelectedUser(null);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al enviar el email");
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Error de conexión al servidor");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const handleOpenDeleteModal = (user: User) => {
+    setSelectedUser(user);
+    setDeleteConfirmation("");
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    const expectedConfirmation = selectedUser.email;
+    if (deleteConfirmation !== expectedConfirmation) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Usuario eliminado correctamente");
+        setDeleteModalOpen(false);
+        setDeleteConfirmation("");
+        setSelectedUser(null);
+        router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al eliminar el usuario");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Error de conexión al servidor");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -325,11 +443,11 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewProfile(user)}>
                             <UserCog className="h-4 w-4 mr-2" />
                             Ver perfil
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenEmailModal(user)}>
                             <Mail className="h-4 w-4 mr-2" />
                             Enviar email
                           </DropdownMenuItem>
@@ -362,10 +480,16 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                           </DropdownMenuSub>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => handleToggleActive(user.id, user.active)}
-                            className={user.active ? "text-red-600" : "text-green-600"}
+                            onSelect={() => handleToggleActive(user.id, user.active)}
+                            className={user.active ? "text-orange-600 focus:text-orange-600" : "text-green-600 focus:text-green-600"}
+                            disabled={loading === user.id}
                           >
-                            {user.active ? (
+                            {loading === user.id ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Procesando...
+                              </>
+                            ) : user.active ? (
                               <>
                                 <ShieldOff className="h-4 w-4 mr-2" />
                                 Desactivar cuenta
@@ -376,6 +500,13 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                                 Activar cuenta
                               </>
                             )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => handleOpenDeleteModal(user)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar cuenta
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -393,6 +524,196 @@ export function UsersClient({ users, stats }: UsersClientProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Profile Modal */}
+      <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Perfil de Usuario</DialogTitle>
+            <DialogDescription>
+              Información detallada del usuario
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-medium">
+                  {selectedUser.name?.charAt(0) || selectedUser.email.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedUser.name || "Sin nombre"}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Rol</p>
+                  <div>{getRoleBadge(selectedUser.role)}</div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Estado</p>
+                  {selectedUser.active ? (
+                    <Badge className="bg-green-500">Activo</Badge>
+                  ) : (
+                    <Badge variant="destructive">Inactivo</Badge>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Suscripción</p>
+                  <div>{getSubscriptionBadge(selectedUser.subscriptionStatus)}</div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Registro
+                  </p>
+                  <p className="text-sm">{formatDate(selectedUser.createdAt)}</p>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{selectedUser.enrollmentsCount}</p>
+                      <p className="text-xs text-muted-foreground">Cursos inscritos</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{selectedUser.certificatesCount}</p>
+                      <p className="text-xs text-muted-foreground">Certificados</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileModalOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Modal */}
+      <Dialog open={emailModalOpen} onOpenChange={setEmailModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Enviar Email</DialogTitle>
+            <DialogDescription>
+              {selectedUser && (
+                <>Enviar un correo a <strong>{selectedUser.name || selectedUser.email}</strong></>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email-subject">Asunto</Label>
+              <Input
+                id="email-subject"
+                placeholder="Asunto del correo"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-message">Mensaje</Label>
+              <Textarea
+                id="email-message"
+                placeholder="Escribe tu mensaje aquí..."
+                rows={6}
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailModalOpen(false)} disabled={sendingEmail}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={sendingEmail || !emailSubject.trim() || !emailMessage.trim()}
+            >
+              {sendingEmail ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Enviar
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Eliminar cuenta permanentemente
+            </DialogTitle>
+            <DialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente la cuenta y todos sus datos asociados.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-sm font-medium">Usuario a eliminar:</p>
+                <p className="text-sm text-muted-foreground">{selectedUser.name || "Sin nombre"}</p>
+                <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                <p className="text-xs text-muted-foreground mt-1">ID: {selectedUser.id}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="delete-confirmation">
+                  Para confirmar, escribe el email del usuario: <strong className="text-red-600">{selectedUser.email}</strong>
+                </Label>
+                <Input
+                  id="delete-confirmation"
+                  placeholder="Escribe el email para confirmar"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  className="border-red-500/50 focus:border-red-500"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={deleting}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={deleting || deleteConfirmation !== selectedUser?.email}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar permanentemente
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
