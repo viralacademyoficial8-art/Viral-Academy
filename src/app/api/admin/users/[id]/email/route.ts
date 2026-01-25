@@ -33,10 +33,18 @@ export async function POST(
       );
     }
 
-    // Get target user
+    // Get target user with profile
     const targetUser = await prisma.user.findUnique({
       where: { id },
-      select: { email: true, name: true },
+      select: {
+        email: true,
+        profile: {
+          select: {
+            displayName: true,
+            firstName: true,
+          }
+        }
+      },
     });
 
     if (!targetUser) {
@@ -45,6 +53,8 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    const userName = targetUser.profile?.displayName || targetUser.profile?.firstName || "estudiante";
 
     // Send email with custom template
     const html = `
@@ -61,7 +71,7 @@ export async function POST(
     </div>
 
     <div style="color: #ffffff;">
-      <p style="margin-bottom: 16px;">Hola ${targetUser.name || "estudiante"},</p>
+      <p style="margin-bottom: 16px;">Hola ${userName},</p>
 
       <div style="white-space: pre-wrap; color: #a1a1aa;">${message}</div>
     </div>
@@ -80,7 +90,7 @@ export async function POST(
       to: targetUser.email,
       subject,
       html,
-      text: `Hola ${targetUser.name || "estudiante"},\n\n${message}\n\n© ${new Date().getFullYear()} Viral Academy.`,
+      text: `Hola ${userName},\n\n${message}\n\n© ${new Date().getFullYear()} Viral Academy.`,
     });
 
     return NextResponse.json({ success: true });
