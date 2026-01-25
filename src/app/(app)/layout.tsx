@@ -20,6 +20,7 @@ export default async function AppRootLayout({
         select: {
           id: true,
           email: true,
+          role: true,
           profile: {
             select: {
               displayName: true,
@@ -45,6 +46,7 @@ export default async function AppRootLayout({
           image: user.profile?.avatar,
           subscriptionStatus: user.subscription?.status || null,
           needsOnboarding,
+          role: user.role,
         };
       }
     }
