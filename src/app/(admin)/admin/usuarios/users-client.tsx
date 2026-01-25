@@ -461,13 +461,16 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                           </DropdownMenuSub>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleToggleActive(user.id, user.active);
-                            }}
-                            className={user.active ? "text-orange-600" : "text-green-600"}
+                            onSelect={() => handleToggleActive(user.id, user.active)}
+                            className={user.active ? "text-orange-600 focus:text-orange-600" : "text-green-600 focus:text-green-600"}
+                            disabled={loading === user.id}
                           >
-                            {user.active ? (
+                            {loading === user.id ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Procesando...
+                              </>
+                            ) : user.active ? (
                               <>
                                 <ShieldOff className="h-4 w-4 mr-2" />
                                 Desactivar cuenta
@@ -480,11 +483,8 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                             )}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleOpenDeleteModal(user);
-                            }}
-                            className="text-red-600"
+                            onSelect={() => handleOpenDeleteModal(user)}
+                            className="text-red-600 focus:text-red-600"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Eliminar cuenta
