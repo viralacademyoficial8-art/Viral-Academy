@@ -25,6 +25,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { YouTubePlayer, getYouTubeVideoId } from "@/components/video/youtube-player";
 
 interface Lesson {
   id: string;
@@ -66,25 +67,6 @@ interface Props {
   progress: number;
   completedCount: number;
   totalLessons: number;
-}
-
-// Extract YouTube video ID from URL
-function getYouTubeVideoId(url: string): string | null {
-  if (!url) return null;
-
-  // Handle different YouTube URL formats
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\n?#]+)/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match && match[1]) {
-      return match[1];
-    }
-  }
-
-  return null;
 }
 
 export function LearnClient({
@@ -181,11 +163,9 @@ export function LearnClient({
         {/* Video Player */}
         <div className="flex-1 bg-black flex items-center justify-center overflow-hidden">
           {videoId ? (
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+            <YouTubePlayer
+              videoId={videoId}
               title={currentLesson.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
               className="w-full h-full"
             />
           ) : (
