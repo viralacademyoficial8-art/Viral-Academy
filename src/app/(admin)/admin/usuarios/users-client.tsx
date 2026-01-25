@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown, Loader2, Calendar, BookOpen, Award } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown, Loader2, Calendar, BookOpen, Award, Trash2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +70,11 @@ export function UsersClient({ users, stats }: UsersClientProps) {
   const [emailSubject, setEmailSubject] = React.useState("");
   const [emailMessage, setEmailMessage] = React.useState("");
   const [sendingEmail, setSendingEmail] = React.useState(false);
+
+  // Delete modal states
+  const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
+  const [deleting, setDeleting] = React.useState(false);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -192,6 +197,40 @@ export function UsersClient({ users, stats }: UsersClientProps) {
       console.error("Error sending email:", error);
     } finally {
       setSendingEmail(false);
+    }
+  };
+
+  const handleOpenDeleteModal = (user: User) => {
+    setSelectedUser(user);
+    setDeleteConfirmation("");
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    const expectedConfirmation = selectedUser.email;
+    if (deleteConfirmation !== expectedConfirmation) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setDeleteModalOpen(false);
+        setDeleteConfirmation("");
+        setSelectedUser(null);
+        router.refresh();
+      } else {
+        const data = await res.json();
+        console.error("Error deleting user:", data.error);
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -422,8 +461,11 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                           </DropdownMenuSub>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => handleToggleActive(user.id, user.active)}
-                            className={user.active ? "text-red-600" : "text-green-600"}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleToggleActive(user.id, user.active);
+                            }}
+                            className={user.active ? "text-orange-600" : "text-green-600"}
                           >
                             {user.active ? (
                               <>
@@ -436,6 +478,16 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                                 Activar cuenta
                               </>
                             )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleOpenDeleteModal(user);
+                            }}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar cuenta
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -577,6 +629,66 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                 <>
                   <Mail className="h-4 w-4 mr-2" />
                   Enviar
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Eliminar cuenta permanentemente
+            </DialogTitle>
+            <DialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente la cuenta y todos sus datos asociados.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-sm font-medium">Usuario a eliminar:</p>
+                <p className="text-sm text-muted-foreground">{selectedUser.name || "Sin nombre"}</p>
+                <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                <p className="text-xs text-muted-foreground mt-1">ID: {selectedUser.id}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="delete-confirmation">
+                  Para confirmar, escribe el email del usuario: <strong className="text-red-600">{selectedUser.email}</strong>
+                </Label>
+                <Input
+                  id="delete-confirmation"
+                  placeholder="Escribe el email para confirmar"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  className="border-red-500/50 focus:border-red-500"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={deleting}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={deleting || deleteConfirmation !== selectedUser?.email}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar permanentemente
                 </>
               )}
             </Button>
