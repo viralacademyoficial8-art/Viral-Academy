@@ -23,22 +23,32 @@ export async function getResources(limit?: number) {
 }
 
 export async function getResourceById(id: string) {
-  const resource = await prisma.resource.findUnique({
-    where: { id },
-    include: {
-      course: true,
-      lesson: true
-    }
-  });
+  try {
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      include: {
+        course: true,
+        lesson: true
+      }
+    });
 
-  return resource;
+    return resource;
+  } catch (error) {
+    console.error("Error fetching resource by id:", error);
+    return null;
+  }
 }
 
 export async function getResourcesByCourse(courseId: string) {
-  const resources = await prisma.resource.findMany({
-    where: { courseId },
-    orderBy: { createdAt: "desc" }
-  });
+  try {
+    const resources = await prisma.resource.findMany({
+      where: { courseId },
+      orderBy: { createdAt: "desc" }
+    });
 
-  return resources;
+    return resources;
+  } catch (error) {
+    console.error("Error fetching resources by course:", error);
+    return [];
+  }
 }

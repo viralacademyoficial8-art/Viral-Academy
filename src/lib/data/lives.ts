@@ -51,17 +51,22 @@ export async function getAllLives() {
 }
 
 export async function getLiveById(id: string) {
-  const live = await prisma.liveEvent.findUnique({
-    where: { id },
-    include: {
-      mentor: {
-        include: { profile: true }
-      },
-      replays: true
-    }
-  });
+  try {
+    const live = await prisma.liveEvent.findUnique({
+      where: { id },
+      include: {
+        mentor: {
+          include: { profile: true }
+        },
+        replays: true
+      }
+    });
 
-  return live;
+    return live;
+  } catch (error) {
+    console.error("Error fetching live by id:", error);
+    return null;
+  }
 }
 
 export async function getReplays(limit?: number) {
@@ -90,37 +95,47 @@ export async function getReplays(limit?: number) {
 }
 
 export async function getReplayById(id: string) {
-  const replay = await prisma.replay.findUnique({
-    where: { id },
-    include: {
-      mentor: {
-        include: { profile: true }
-      },
-      liveEvent: true
-    }
-  });
+  try {
+    const replay = await prisma.replay.findUnique({
+      where: { id },
+      include: {
+        mentor: {
+          include: { profile: true }
+        },
+        liveEvent: true
+      }
+    });
 
-  return replay;
+    return replay;
+  } catch (error) {
+    console.error("Error fetching replay by id:", error);
+    return null;
+  }
 }
 
 export async function getLivesThisWeek() {
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
+  try {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
 
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 7);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
 
-  const count = await prisma.liveEvent.count({
-    where: {
-      published: true,
-      scheduledAt: {
-        gte: startOfWeek,
-        lt: endOfWeek
+    const count = await prisma.liveEvent.count({
+      where: {
+        published: true,
+        scheduledAt: {
+          gte: startOfWeek,
+          lt: endOfWeek
+        }
       }
-    }
-  });
+    });
 
-  return count;
+    return count;
+  } catch (error) {
+    console.error("Error fetching lives this week:", error);
+    return 0;
+  }
 }

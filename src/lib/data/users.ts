@@ -92,19 +92,29 @@ export async function getUserStats(userId: string) {
 }
 
 export async function getUserNotifications(userId: string, limit = 10) {
-  const notifications = await prisma.notification.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: limit
-  });
+  try {
+    const notifications = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: limit
+    });
 
-  return notifications;
+    return notifications;
+  } catch (error) {
+    console.error("Error fetching user notifications:", error);
+    return [];
+  }
 }
 
 export async function getUnreadNotificationCount(userId: string) {
-  const count = await prisma.notification.count({
-    where: { userId, read: false }
-  });
+  try {
+    const count = await prisma.notification.count({
+      where: { userId, read: false }
+    });
 
-  return count;
+    return count;
+  } catch (error) {
+    console.error("Error fetching unread notification count:", error);
+    return 0;
+  }
 }

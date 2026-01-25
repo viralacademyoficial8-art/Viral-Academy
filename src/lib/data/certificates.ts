@@ -24,41 +24,51 @@ export async function getUserCertificates(userId: string) {
 }
 
 export async function getCertificateByCode(verificationCode: string) {
-  const certificate = await prisma.certificate.findUnique({
-    where: { verificationCode },
-    include: {
-      user: {
-        include: { profile: true }
-      },
-      course: {
-        include: {
-          mentor: {
-            include: { profile: true }
+  try {
+    const certificate = await prisma.certificate.findUnique({
+      where: { verificationCode },
+      include: {
+        user: {
+          include: { profile: true }
+        },
+        course: {
+          include: {
+            mentor: {
+              include: { profile: true }
+            }
           }
         }
       }
-    }
-  });
+    });
 
-  return certificate;
+    return certificate;
+  } catch (error) {
+    console.error("Error fetching certificate by code:", error);
+    return null;
+  }
 }
 
 export async function getCertificateById(id: string) {
-  const certificate = await prisma.certificate.findUnique({
-    where: { id },
-    include: {
-      user: {
-        include: { profile: true }
-      },
-      course: {
-        include: {
-          mentor: {
-            include: { profile: true }
+  try {
+    const certificate = await prisma.certificate.findUnique({
+      where: { id },
+      include: {
+        user: {
+          include: { profile: true }
+        },
+        course: {
+          include: {
+            mentor: {
+              include: { profile: true }
+            }
           }
         }
       }
-    }
-  });
+    });
 
-  return certificate;
+    return certificate;
+  } catch (error) {
+    console.error("Error fetching certificate by id:", error);
+    return null;
+  }
 }
