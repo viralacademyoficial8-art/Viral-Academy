@@ -115,7 +115,14 @@ export function CoursesClient({ courses }: CoursesClientProps) {
             <motion.div key={course.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + index * 0.05 }}>
               <Link href={`/app/cursos/${course.slug}`}>
                 <Card hover className="h-full overflow-hidden group">
-                  <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative">
+                  <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
+                    {course.thumbnail && (
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                     {course.featured && <Badge className="absolute top-3 left-3">Destacado</Badge>}
                     {course.enrolled && course.progress > 0 && (
                       <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-2">
