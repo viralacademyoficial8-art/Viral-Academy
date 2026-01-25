@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   Search,
-  Bell,
   Menu,
   LogOut,
   User,
@@ -28,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 
 interface UserData {
   name?: string | null;
@@ -134,12 +134,7 @@ export function TopbarApp({ onMenuClick, user }: TopbarAppProps) {
         </Button>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative" asChild>
-          <Link href="/app/notificaciones">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
-          </Link>
-        </Button>
+        <NotificationDropdown />
 
         {/* User Menu */}
         <DropdownMenu>
