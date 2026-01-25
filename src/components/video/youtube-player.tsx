@@ -1,8 +1,44 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Play, Pause, Volume2, VolumeX, Maximize, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Play, RotateCcw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Extend Window interface for YouTube API
+declare global {
+  interface Window {
+    YT: {
+      Player: new (
+        elementId: string | HTMLElement,
+        config: {
+          videoId: string;
+          playerVars?: Record<string, string | number>;
+          events?: {
+            onReady?: (event: { target: YTPlayer }) => void;
+            onStateChange?: (event: { data: number; target: YTPlayer }) => void;
+            onError?: (event: { data: number }) => void;
+          };
+        }
+      ) => YTPlayer;
+      PlayerState: {
+        ENDED: number;
+        PLAYING: number;
+        PAUSED: number;
+        BUFFERING: number;
+        CUED: number;
+      };
+    };
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
+interface YTPlayer {
+  playVideo: () => void;
+  pauseVideo: () => void;
+  seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
+  destroy: () => void;
+  getPlayerState: () => number;
+}
 
 interface YouTubePlayerProps {
   videoId: string;
@@ -29,65 +65,150 @@ export function getYouTubeVideoId(url: string): string | null {
   return null;
 }
 
+// Load YouTube IFrame API
+let apiLoaded = false;
+let apiLoading = false;
+const apiCallbacks: (() => void)[] = [];
+
+function loadYouTubeAPI(): Promise<void> {
+  return new Promise((resolve) => {
+    if (apiLoaded && window.YT) {
+      resolve();
+      return;
+    }
+
+    apiCallbacks.push(resolve);
+
+    if (apiLoading) {
+      return;
+    }
+
+    apiLoading = true;
+
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      apiLoaded = true;
+      apiCallbacks.forEach((cb) => cb());
+      apiCallbacks.length = 0;
+    };
+  });
+}
+
 export function YouTubePlayer({
   videoId,
   title = "Video",
   className,
   autoPlay = false,
 }: YouTubePlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(!autoPlay);
-  const [isLoading, setIsLoading] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasEnded, setHasEnded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
+  const playerContainerId = useRef(`yt-player-${videoId}-${Math.random().toString(36).slice(2)}`);
 
-  // YouTube embed parameters to minimize branding:
-  // - rel=0: Don't show related videos from other channels
-  // - modestbranding=1: Minimal YouTube branding
-  // - showinfo=0: Hide video title and uploader (deprecated but still works)
-  // - iv_load_policy=3: Hide video annotations
-  // - disablekb=0: Enable keyboard controls
-  // - fs=1: Allow fullscreen
-  // - playsinline=1: Play inline on mobile
-  // - controls=1: Show player controls (set to 0 to hide completely)
-  // - cc_load_policy=0: Don't auto-show captions
-  // - autoplay: Only if specified
-  const embedParams = new URLSearchParams({
-    rel: "0",
-    modestbranding: "1",
-    showinfo: "0",
-    iv_load_policy: "3",
-    disablekb: "0",
-    fs: "1",
-    playsinline: "1",
-    controls: "1",
-    cc_load_policy: "0",
-    autoplay: isPlaying || autoPlay ? "1" : "0",
-    enablejsapi: "1",
-    origin: typeof window !== "undefined" ? window.location.origin : "",
-  });
+  const destroyPlayer = useCallback(() => {
+    if (playerRef.current) {
+      try {
+        playerRef.current.destroy();
+      } catch (e) {
+        // Player may already be destroyed
+      }
+      playerRef.current = null;
+    }
+  }, []);
 
-  // Use youtube-nocookie.com for enhanced privacy and reduced branding
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?${embedParams.toString()}`;
+  const initPlayer = useCallback(async () => {
+    setIsLoading(true);
+    setHasEnded(false);
+
+    await loadYouTubeAPI();
+
+    // Destroy existing player if any
+    destroyPlayer();
+
+    // Create player container
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Remove existing player div if any
+    const existingDiv = document.getElementById(playerContainerId.current);
+    if (existingDiv) {
+      existingDiv.remove();
+    }
+
+    // Create new player div
+    const playerDiv = document.createElement("div");
+    playerDiv.id = playerContainerId.current;
+    playerDiv.className = "absolute inset-0 w-full h-full";
+
+    const playerWrapper = container.querySelector(".player-wrapper");
+    if (playerWrapper) {
+      playerWrapper.appendChild(playerDiv);
+    }
+
+    playerRef.current = new window.YT.Player(playerContainerId.current, {
+      videoId: videoId,
+      playerVars: {
+        rel: 0,
+        modestbranding: 1,
+        showinfo: 0,
+        iv_load_policy: 3,
+        fs: 1,
+        playsinline: 1,
+        controls: 1,
+        cc_load_policy: 0,
+        autoplay: 1,
+        origin: window.location.origin,
+      },
+      events: {
+        onReady: (event) => {
+          setIsLoading(false);
+          setShowOverlay(false);
+          event.target.playVideo();
+        },
+        onStateChange: (event) => {
+          // YT.PlayerState.ENDED = 0
+          if (event.data === 0) {
+            setHasEnded(true);
+            setShowOverlay(true);
+          }
+          // YT.PlayerState.PLAYING = 1
+          if (event.data === 1) {
+            setHasEnded(false);
+            setShowOverlay(false);
+          }
+        },
+        onError: () => {
+          setIsLoading(false);
+        },
+      },
+    });
+  }, [videoId, destroyPlayer]);
 
   const handlePlay = () => {
-    setShowOverlay(false);
-    setIsPlaying(true);
-  };
-
-  const handleIframeLoad = () => {
-    setIsLoading(false);
-  };
-
-  const handleFullscreen = () => {
-    if (containerRef.current) {
-      const iframe = containerRef.current.querySelector("iframe");
-      if (iframe) {
-        if (iframe.requestFullscreen) {
-          iframe.requestFullscreen();
-        }
-      }
+    if (hasEnded && playerRef.current) {
+      // Replay - seek to start and play
+      playerRef.current.seekTo(0, true);
+      playerRef.current.playVideo();
+      setShowOverlay(false);
+      setHasEnded(false);
+    } else {
+      // First play - initialize player
+      initPlayer();
     }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      destroyPlayer();
+    };
+  }, [destroyPlayer]);
 
   return (
     <div
@@ -97,78 +218,63 @@ export function YouTubePlayer({
         className
       )}
     >
-      {/* Main video container with overflow hidden to crop YouTube logo in corners */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Slight scale to crop edges where YouTube branding appears */}
-        <div className="absolute inset-[-2%] w-[104%] h-[104%]">
-          {(isPlaying || autoPlay || !showOverlay) && (
-            <iframe
-              src={embedUrl}
-              title={title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="w-full h-full border-0"
-              onLoad={handleIframeLoad}
-            />
-          )}
-        </div>
+      {/* Player wrapper */}
+      <div className="player-wrapper absolute inset-0 overflow-hidden">
+        {/* YouTube player will be inserted here */}
       </div>
 
-      {/* Custom overlay to hide YouTube logo when paused */}
+      {/* Custom overlay - shown initially and when video ends */}
       {showOverlay && (
         <div
-          className="absolute inset-0 flex items-center justify-center cursor-pointer z-10 bg-black/60 backdrop-blur-sm"
+          className="absolute inset-0 flex items-center justify-center cursor-pointer z-10"
           onClick={handlePlay}
         >
           {/* Thumbnail */}
           <img
             src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
             alt={title}
-            className="absolute inset-0 w-full h-full object-cover opacity-80"
+            className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
-              // Fallback to hqdefault if maxresdefault doesn't exist
               (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
             }}
           />
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
 
-          {/* Custom play button */}
+          {/* Custom play/replay button */}
           <button
             className="relative z-20 w-20 h-20 rounded-full bg-primary/90 hover:bg-primary flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-2xl"
             onClick={handlePlay}
           >
-            <Play className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" />
+            {hasEnded ? (
+              <RotateCcw className="w-8 h-8 text-primary-foreground" />
+            ) : (
+              <Play className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" />
+            )}
           </button>
 
-          {/* Video title */}
+          {/* Video title / replay text */}
           <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-            <h3 className="text-white text-lg font-medium truncate">{title}</h3>
+            <h3 className="text-white text-lg font-medium truncate">
+              {hasEnded ? "Reproducir de nuevo" : title}
+            </h3>
           </div>
         </div>
       )}
 
       {/* Loading indicator */}
-      {isPlaying && isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center z-5 bg-black/80">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/80">
           <Loader2 className="w-12 h-12 text-primary animate-spin" />
         </div>
       )}
-
-      {/* Bottom gradient to hide YouTube branding at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/30 to-transparent pointer-events-none z-20 opacity-0 group-hover:opacity-0" />
-
-      {/* Top-right corner cover to hide YouTube logo */}
-      <div className="absolute top-0 right-0 w-32 h-12 pointer-events-none z-20">
-        <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent opacity-0" />
-      </div>
     </div>
   );
 }
 
-// Alternative: Minimal player that shows only when clicked (no YouTube UI until play)
-export function YouTubePlayerMinimal({
+// Alternative: Simple version for cases where API isn't needed
+export function YouTubePlayerSimple({
   videoId,
   title = "Video",
   className,
@@ -197,7 +303,6 @@ export function YouTubePlayerMinimal({
         )}
         onClick={() => setIsActive(true)}
       >
-        {/* Thumbnail */}
         <img
           src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
           alt={title}
@@ -206,11 +311,7 @@ export function YouTubePlayerMinimal({
             (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
           }}
         />
-
-        {/* Overlay */}
         <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
-
-        {/* Play button */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-20 h-20 rounded-full bg-primary/90 group-hover:bg-primary flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-2xl">
             <Play className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" />
