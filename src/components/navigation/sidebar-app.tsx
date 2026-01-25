@@ -98,7 +98,7 @@ export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = fa
           <nav className="space-y-6 px-3">
             {navigation.map((section, index) => (
               <div key={index}>
-                {section.title && !collapsed && (
+                {section.title && !isCollapsed && (
                   <h4 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
                     {section.title}
                   </h4>
@@ -131,8 +131,8 @@ export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = fa
                             )}
                           />
                         )}
-                        {!collapsed && <span>{item.title}</span>}
-                        {item.badge && !collapsed && (
+                        {!isCollapsed && <span>{item.title}</span>}
+                        {item.badge && !isCollapsed && (
                           <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
                             {item.badge}
                           </span>
@@ -158,7 +158,7 @@ export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = fa
               )}
             >
               <Shield className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>Panel Admin</span>}
+              {!isCollapsed && <span>Panel Admin</span>}
             </Link>
           </div>
         )}
@@ -199,7 +199,7 @@ export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = fa
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
-            {!collapsed && <span className="ml-2">Cerrar sesión</span>}
+            {!isCollapsed && <span className="ml-2">Cerrar sesión</span>}
           </Button>
         </div>
       </div>
