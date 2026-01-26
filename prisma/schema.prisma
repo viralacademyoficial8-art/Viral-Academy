@@ -497,6 +497,10 @@ model Certificate {
   userId           String
   courseId         String
   verificationCode String   @unique
+  studentName      String   // Nombre del estudiante al momento de generar
+  courseName       String   // Nombre del curso al momento de generar
+  signatureUrl     String?  // URL de la firma del estudiante
+  completedAt      DateTime // Fecha de completación del curso
   issuedAt         DateTime @default(now())
   pdfUrl           String?
 
@@ -505,6 +509,7 @@ model Certificate {
 
   @@unique([userId, courseId])
   @@index([verificationCode])
+  @@index([userId])
 }
 
 // ============================================

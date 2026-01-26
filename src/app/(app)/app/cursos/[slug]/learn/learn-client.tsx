@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { YouTubePlayer, getYouTubeVideoId } from "@/components/video/youtube-player";
+import { CourseCompletionModal } from "@/components/certificate/course-completion-modal";
 
 interface Lesson {
   id: string;
@@ -125,6 +126,8 @@ interface Props {
   completedCount: number;
   totalLessons: number;
   userId?: string;
+  studentName?: string;
+  hasCertificate?: boolean;
 }
 
 export function LearnClient({
@@ -137,6 +140,8 @@ export function LearnClient({
   completedCount,
   totalLessons,
   userId,
+  studentName = "Estudiante",
+  hasCertificate = false,
 }: Props) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -144,6 +149,10 @@ export function LearnClient({
   const [expandedModules, setExpandedModules] = useState<string[]>(
     course.modules.map((m) => m.id)
   );
+
+  // Completion modal state
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [localProgress, setLocalProgress] = useState(progress);
 
   // Comments state
   const [comments, setComments] = useState<Comment[]>([]);
@@ -201,11 +210,27 @@ export function LearnClient({
       });
 
       if (res.ok) {
+        const isMarkedComplete = !currentLesson.completed;
         toast.success(
-          currentLesson.completed
-            ? "Lección marcada como pendiente"
-            : "¡Lección completada!"
+          isMarkedComplete
+            ? "¡Lección completada!"
+            : "Lección marcada como pendiente"
         );
+
+        // Check if course is now 100% complete
+        if (isMarkedComplete && !hasCertificate) {
+          const newCompletedCount = completedCount + 1;
+          const newProgress = Math.round((newCompletedCount / totalLessons) * 100);
+          setLocalProgress(newProgress);
+
+          if (newProgress >= 100) {
+            // Show completion modal after a short delay
+            setTimeout(() => {
+              setShowCompletionModal(true);
+            }, 500);
+          }
+        }
+
         router.refresh();
       } else {
         toast.error("Error al actualizar progreso");
@@ -877,6 +902,15 @@ export function LearnClient({
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Course Completion Modal */}
+      <CourseCompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        courseId={course.id}
+        courseTitle={course.title}
+        studentName={studentName}
+      />
     </div>
   );
 }
