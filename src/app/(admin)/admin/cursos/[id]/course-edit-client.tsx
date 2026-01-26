@@ -300,10 +300,15 @@ export function CourseEditClient({ course, mentors }: Props) {
       });
 
       if (res.ok) {
+        toast.success("Curso guardado correctamente");
         router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al guardar el curso");
       }
     } catch (error) {
       console.error("Error saving course:", error);
+      toast.error("Error de conexión al guardar");
     } finally {
       setIsLoading(false);
     }
