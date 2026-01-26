@@ -6,14 +6,10 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default async function CursosPage() {
-  const session = await auth();
-  const userId = session?.user?.id;
-
-  // Fetch courses and categories in parallel
-  const [courses, dbCategories] = await Promise.all([
-    getAllCoursesWithUserStatus(userId),
-    prisma.courseCat.findMany({
+// Helper to safely fetch categories (handles case where table doesn't exist)
+async function getCategories() {
+  try {
+    return await prisma.courseCat.findMany({
       where: { active: true },
       orderBy: { order: "asc" },
       select: {
@@ -22,7 +18,22 @@ export default async function CursosPage() {
         name: true,
         color: true,
       },
-    }),
+    });
+  } catch (error) {
+    // Table might not exist yet, return empty array to use legacy categories
+    console.log("CourseCategories table not found, using legacy categories");
+    return [];
+  }
+}
+
+export default async function CursosPage() {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  // Fetch courses and categories in parallel
+  const [courses, dbCategories] = await Promise.all([
+    getAllCoursesWithUserStatus(userId),
+    getCategories(),
   ]);
 
   const formattedCourses = courses.map((course) => {
