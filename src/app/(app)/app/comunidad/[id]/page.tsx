@@ -119,7 +119,7 @@ export default async function PostDetailPage({ params }: Props) {
     author: {
       id: post.author.id,
       name: getAuthorName(post.author),
-      avatar: post.author.profile?.avatar,
+      avatar: post.author.profile?.avatar ?? null,
       role: post.author.role,
     },
     category: {
@@ -137,7 +137,7 @@ export default async function PostDetailPage({ params }: Props) {
       author: {
         id: comment.author.id,
         name: getAuthorName(comment.author),
-        avatar: comment.author.profile?.avatar,
+        avatar: comment.author.profile?.avatar ?? null,
         role: comment.author.role,
       },
       likesCount: comment.likes.length,
@@ -149,7 +149,7 @@ export default async function PostDetailPage({ params }: Props) {
         author: {
           id: reply.author.id,
           name: getAuthorName(reply.author),
-          avatar: reply.author.profile?.avatar,
+          avatar: reply.author.profile?.avatar ?? null,
           role: reply.author.role,
         },
         likesCount: reply.likes.length,
