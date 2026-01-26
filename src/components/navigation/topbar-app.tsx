@@ -97,11 +97,11 @@ export function TopbarApp({ onMenuClick, user }: TopbarAppProps) {
           ) : (
             <Button
               variant="outline"
-              className="hidden sm:flex items-center gap-2 text-muted-foreground"
+              className="hidden sm:flex items-center gap-2 text-muted-foreground min-w-[280px] md:min-w-[320px] lg:min-w-[380px] justify-start"
               onClick={() => setSearchOpen(true)}
             >
               <Search className="h-4 w-4" />
-              <span>Buscar...</span>
+              <span className="flex-1 text-left">Buscar cursos, lecciones, recursos...</span>
               <kbd className="hidden md:inline-flex pointer-events-none h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
                 <span className="text-xs">⌘</span>K
               </kbd>
