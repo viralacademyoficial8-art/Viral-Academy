@@ -97,7 +97,7 @@ export async function DELETE(
       where: { id: session.user.id },
     });
 
-    if (!user || user.role !== "ADMIN") {
+    if (!user || (user.role !== "ADMIN" && user.role !== "MENTOR")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 

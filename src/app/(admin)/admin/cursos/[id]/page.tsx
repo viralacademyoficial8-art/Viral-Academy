@@ -27,6 +27,9 @@ async function getCourse(id: string) {
           include: {
             lessons: {
               orderBy: { order: "asc" },
+              include: {
+                resources: true,
+              },
             },
           },
         },
@@ -96,6 +99,13 @@ export default async function CourseEditPage({ params }: Props) {
         videoUrl: l.videoUrl,
         duration: l.duration,
         published: l.published,
+        resources: l.resources.map((r) => ({
+          id: r.id,
+          title: r.title,
+          fileUrl: r.fileUrl,
+          fileType: r.fileType,
+          fileSize: r.fileSize,
+        })),
       })),
     })),
   };

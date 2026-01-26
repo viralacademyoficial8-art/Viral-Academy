@@ -20,6 +20,10 @@ import {
   AlertTriangle,
   Link as LinkIcon,
   Upload,
+  FileText,
+  File,
+  Download,
+  Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -49,6 +53,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+interface Resource {
+  id: string;
+  title: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number | null;
+}
+
 interface Lesson {
   id: string;
   title: string;
@@ -56,6 +68,7 @@ interface Lesson {
   videoUrl: string | null;
   duration: number | null;
   published: boolean;
+  resources?: Resource[];
 }
 
 interface Module {
@@ -155,6 +168,13 @@ export function CourseEditClient({ course, mentors }: Props) {
     published: true,
   });
   const [videoUrlError, setVideoUrlError] = useState("");
+
+  // Attachments state
+  const [attachments, setAttachments] = useState<{ file: File; title: string }[]>([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [editAttachments, setEditAttachments] = useState<{ file: File; title: string }[]>([]);
+  const [existingResources, setExistingResources] = useState<Resource[]>([]);
+  const [resourcesToDelete, setResourcesToDelete] = useState<string[]>([]);
 
   // Delete states
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
@@ -296,6 +316,9 @@ export function CourseEditClient({ course, mentors }: Props) {
       videoUrl: lesson.videoUrl || "",
       published: lesson.published,
     });
+    setExistingResources(lesson.resources || []);
+    setEditAttachments([]);
+    setResourcesToDelete([]);
   };
 
   const handleSaveLesson = async () => {
@@ -315,7 +338,24 @@ export function CourseEditClient({ course, mentors }: Props) {
       });
 
       if (res.ok) {
+        // Delete removed resources
+        for (const resourceId of resourcesToDelete) {
+          await fetch(`/api/admin/resources/${resourceId}`, {
+            method: "DELETE",
+          });
+        }
+
+        // Upload new attachments
+        if (editAttachments.length > 0) {
+          setIsUploadingAttachment(true);
+          await uploadAttachments(editingLesson.id, editAttachments);
+          setIsUploadingAttachment(false);
+        }
+
         setEditingLesson(null);
+        setExistingResources([]);
+        setEditAttachments([]);
+        setResourcesToDelete([]);
         toast.success("Lección actualizada");
         router.refresh();
       }
@@ -399,10 +439,20 @@ export function CourseEditClient({ course, mentors }: Props) {
       });
 
       if (res.ok) {
+        const lesson = await res.json();
+
+        // Upload attachments if any
+        if (attachments.length > 0) {
+          setIsUploadingAttachment(true);
+          await uploadAttachments(lesson.id, attachments);
+          setIsUploadingAttachment(false);
+        }
+
         setIsCreateLessonOpen(false);
         setSelectedModuleId(null);
         setNewLessonFormData({ title: "", videoUrl: "", published: true });
         setVideoUrlError("");
+        setAttachments([]);
         toast.success("Lección creada correctamente");
         router.refresh();
       } else {
@@ -463,11 +513,127 @@ export function CourseEditClient({ course, mentors }: Props) {
     }
   };
 
+  // Handle attachment file selection
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/zip",
+      "application/x-zip-compressed",
+      "text/plain",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    const maxSize = 50 * 1024 * 1024; // 50MB
+
+    const newAttachments: { file: File; title: string }[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Formato no permitido: ${file.name}`);
+        return;
+      }
+      if (file.size > maxSize) {
+        toast.error(`Archivo muy grande (máx 50MB): ${file.name}`);
+        return;
+      }
+      newAttachments.push({
+        file,
+        title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for title
+      });
+    });
+
+    if (isEdit) {
+      setEditAttachments([...editAttachments, ...newAttachments]);
+    } else {
+      setAttachments([...attachments, ...newAttachments]);
+    }
+
+    // Reset input
+    e.target.value = "";
+  };
+
+  // Remove attachment from list
+  const removeAttachment = (index: number, isEdit = false) => {
+    if (isEdit) {
+      setEditAttachments(editAttachments.filter((_, i) => i !== index));
+    } else {
+      setAttachments(attachments.filter((_, i) => i !== index));
+    }
+  };
+
+  // Upload attachments and create resources
+  const uploadAttachments = async (lessonId: string, files: { file: File; title: string }[]) => {
+    for (const { file, title } of files) {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+
+      try {
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formDataUpload,
+        });
+
+        if (!uploadRes.ok) {
+          toast.error(`Error al subir: ${file.name}`);
+          continue;
+        }
+
+        const uploadData = await uploadRes.json();
+
+        // Create resource in database
+        await fetch("/api/admin/resources", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lessonId,
+            title,
+            fileUrl: uploadData.url,
+            fileType: file.name.split(".").pop() || "unknown",
+            fileSize: file.size,
+          }),
+        });
+      } catch (error) {
+        console.error("Error uploading attachment:", error);
+        toast.error(`Error al subir: ${file.name}`);
+      }
+    }
+  };
+
+  // Get file icon based on type
+  const getFileIcon = (fileType: string) => {
+    const type = fileType.toLowerCase();
+    if (type === "pdf") return <FileText className="w-4 h-4 text-red-500" />;
+    if (["doc", "docx"].includes(type)) return <FileText className="w-4 h-4 text-blue-500" />;
+    if (["xls", "xlsx"].includes(type)) return <FileText className="w-4 h-4 text-green-500" />;
+    if (["ppt", "pptx"].includes(type)) return <FileText className="w-4 h-4 text-orange-500" />;
+    return <File className="w-4 h-4 text-muted-foreground" />;
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   // Open lesson creation dialog for specific module
   const openCreateLessonDialog = (moduleId: string) => {
     setSelectedModuleId(moduleId);
     setNewLessonFormData({ title: "", videoUrl: "", published: true });
     setVideoUrlError("");
+    setAttachments([]);
     setIsCreateLessonOpen(true);
   };
 
@@ -1013,12 +1179,133 @@ export function CourseEditClient({ course, mentors }: Props) {
                 {lessonFormData.published ? "Sí" : "No"}
               </Button>
             </div>
+
+            {/* Existing Resources */}
+            {existingResources.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  Archivos Existentes
+                </Label>
+                <div className="space-y-2">
+                  {existingResources
+                    .filter((r) => !resourcesToDelete.includes(r.id))
+                    .map((resource) => (
+                      <div
+                        key={resource.id}
+                        className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          {getFileIcon(resource.fileType)}
+                          <div>
+                            <p className="text-sm font-medium">{resource.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {resource.fileType.toUpperCase()} {formatFileSize(resource.fileSize)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            asChild
+                          >
+                            <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
+                              <Download className="w-4 h-4" />
+                            </a>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => setResourcesToDelete([...resourcesToDelete, resource.id])}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add new attachments */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Agregar Archivos
+              </Label>
+              <Input
+                type="file"
+                multiple
+                onChange={(e) => handleAttachmentSelect(e, true)}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt,.jpg,.jpeg,.png,.webp"
+                className="file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-primary file:text-primary-foreground"
+              />
+              <p className="text-xs text-muted-foreground">
+                PDF, Word, Excel, PowerPoint, ZIP, imágenes (máx 50MB)
+              </p>
+
+              {/* New attachments list */}
+              {editAttachments.length > 0 && (
+                <div className="space-y-2 mt-2">
+                  {editAttachments.map((att, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        {getFileIcon(att.file.name.split(".").pop() || "")}
+                        <div>
+                          <Input
+                            value={att.title}
+                            onChange={(e) => {
+                              const newAttachments = [...editAttachments];
+                              newAttachments[index].title = e.target.value;
+                              setEditAttachments(newAttachments);
+                            }}
+                            className="h-7 text-sm"
+                            placeholder="Título del archivo"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {att.file.name} ({formatFileSize(att.file.size)})
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => removeAttachment(index, true)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingLesson(null)}>
+            <Button variant="outline" onClick={() => {
+              setEditingLesson(null);
+              setExistingResources([]);
+              setEditAttachments([]);
+              setResourcesToDelete([]);
+            }}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveLesson}>Guardar</Button>
+            <Button onClick={handleSaveLesson} disabled={isUploadingAttachment}>
+              {isUploadingAttachment ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Subiendo...
+                </>
+              ) : (
+                "Guardar"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1131,6 +1418,65 @@ export function CourseEditClient({ course, mentors }: Props) {
                 </p>
               )}
             </div>
+            {/* Attachments Section */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Paperclip className="w-4 h-4" />
+                Archivos Adjuntos (opcional)
+              </Label>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  multiple
+                  onChange={(e) => handleAttachmentSelect(e, false)}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt,.jpg,.jpeg,.png,.webp"
+                  className="file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-primary file:text-primary-foreground"
+                />
+                <p className="text-xs text-muted-foreground">
+                  PDF, Word, Excel, PowerPoint, ZIP, imágenes (máx 50MB por archivo)
+                </p>
+              </div>
+
+              {/* Attachments list */}
+              {attachments.length > 0 && (
+                <div className="space-y-2 mt-2">
+                  {attachments.map((att, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-muted rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        {getFileIcon(att.file.name.split(".").pop() || "")}
+                        <div>
+                          <Input
+                            value={att.title}
+                            onChange={(e) => {
+                              const newAttachments = [...attachments];
+                              newAttachments[index].title = e.target.value;
+                              setAttachments(newAttachments);
+                            }}
+                            className="h-7 text-sm"
+                            placeholder="Título del archivo"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {att.file.name} ({formatFileSize(att.file.size)})
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => removeAttachment(index, false)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center justify-between">
               <Label>Publicar inmediatamente</Label>
               <Button
@@ -1155,18 +1501,19 @@ export function CourseEditClient({ course, mentors }: Props) {
                 setSelectedModuleId(null);
                 setNewLessonFormData({ title: "", videoUrl: "", published: true });
                 setVideoUrlError("");
+                setAttachments([]);
               }}
             >
               Cancelar
             </Button>
             <Button
               onClick={handleCreateLesson}
-              disabled={isCreatingLesson || !newLessonFormData.title.trim()}
+              disabled={isCreatingLesson || isUploadingAttachment || !newLessonFormData.title.trim()}
             >
-              {isCreatingLesson ? (
+              {isCreatingLesson || isUploadingAttachment ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creando...
+                  {isUploadingAttachment ? "Subiendo archivos..." : "Creando..."}
                 </>
               ) : (
                 "Crear Lección"
