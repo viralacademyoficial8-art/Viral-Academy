@@ -17,6 +17,7 @@ import {
   ChevronDown,
   BarChart3,
   Upload,
+  Tags,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Usuarios", href: "/admin/usuarios", icon: Users },
+  { name: "Categorías", href: "/admin/categorias", icon: Tags },
   { name: "Cursos", href: "/admin/cursos", icon: GraduationCap },
   { name: "Lives", href: "/admin/lives", icon: Video },
   { name: "Suscripciones", href: "/admin/suscripciones", icon: CreditCard },
