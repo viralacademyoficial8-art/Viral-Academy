@@ -579,7 +579,7 @@ export function CourseEditClient({ course, mentors }: Props) {
       formDataUpload.append("file", file);
 
       try {
-        const uploadRes = await fetch("/api/upload", {
+        const uploadRes = await fetch("/api/upload/attachments", {
           method: "POST",
           body: formDataUpload,
         });

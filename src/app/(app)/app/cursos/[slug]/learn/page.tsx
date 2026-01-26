@@ -110,6 +110,12 @@ export default async function LearnPage({ params, searchParams }: Props) {
     })),
   }));
 
+  // Get resources/attachments for the current lesson
+  const lessonResources = await prisma.resource.findMany({
+    where: { lessonId: currentLesson.id },
+    orderBy: { createdAt: "asc" },
+  });
+
   const formattedCurrentLesson = {
     id: currentLesson.id,
     title: currentLesson.title,
@@ -119,6 +125,13 @@ export default async function LearnPage({ params, searchParams }: Props) {
     notes: currentLesson.notes || null,
     moduleTitle: currentLesson.moduleTitle,
     completed: progressMap.get(currentLesson.id)?.completed || false,
+    resources: lessonResources.map((r) => ({
+      id: r.id,
+      title: r.title,
+      fileUrl: r.fileUrl,
+      fileType: r.fileType,
+      fileSize: r.fileSize,
+    })),
   };
 
   // Find next and previous lessons
