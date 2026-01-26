@@ -96,7 +96,7 @@ export const studentSidebarNav: NavSection[] = [
     title: "Cuenta",
     items: [
       { title: "Perfil", href: "/app/perfil", icon: User },
-      { title: "Membresía", href: "/app/billing", icon: CreditCard },
+      { title: "Membresía", href: "/app/membresia", icon: CreditCard },
     ],
   },
 ];
