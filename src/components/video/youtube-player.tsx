@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Loader2, Settings } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Loader2, SkipBack, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Slider } from "@/components/ui/slider";
 
 // Extend Window interface for YouTube API
 declare global {
@@ -53,9 +52,6 @@ interface YouTubePlayerProps {
   videoId: string;
   title?: string;
   className?: string;
-  showBranding?: boolean;
-  brandingLogo?: string;
-  brandingText?: string;
 }
 
 // Extract YouTube video ID from various URL formats
@@ -127,11 +123,8 @@ export function YouTubePlayer({
   videoId,
   title = "Video",
   className,
-  showBranding = true,
-  brandingText = "Viral Academy",
 }: YouTubePlayerProps) {
   // Player state
-  const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -140,7 +133,6 @@ export function YouTubePlayer({
   // Time state
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [buffered, setBuffered] = useState(0);
 
   // Volume state
   const [volume, setVolume] = useState(100);
@@ -151,10 +143,13 @@ export function YouTubePlayer({
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const [hoverPosition, setHoverPosition] = useState(0);
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
   const playerContainerId = useRef(`yt-player-${videoId}-${Math.random().toString(36).slice(2)}`);
   const timeUpdateInterval = useRef<NodeJS.Timeout | null>(null);
   const controlsTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -168,13 +163,11 @@ export function YouTubePlayer({
     const container = containerRef.current;
     if (!container) return;
 
-    // Remove existing player div if any
     const existingDiv = document.getElementById(playerContainerId.current);
     if (existingDiv) {
       existingDiv.remove();
     }
 
-    // Create new player div
     const playerDiv = document.createElement("div");
     playerDiv.id = playerContainerId.current;
     playerDiv.style.position = "absolute";
@@ -191,12 +184,12 @@ export function YouTubePlayer({
     playerRef.current = new window.YT.Player(playerContainerId.current, {
       videoId: videoId,
       playerVars: {
-        controls: 0, // Hide YouTube controls completely
-        disablekb: 1, // Disable keyboard controls (we'll handle them)
-        fs: 0, // Disable YouTube fullscreen button
-        iv_load_policy: 3, // Hide annotations
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        iv_load_policy: 3,
         modestbranding: 1,
-        rel: 0, // Don't show related videos
+        rel: 0,
         showinfo: 0,
         playsinline: 1,
         origin: window.location.origin,
@@ -205,7 +198,6 @@ export function YouTubePlayer({
       },
       events: {
         onReady: (event) => {
-          setIsReady(true);
           setIsLoading(false);
           setDuration(event.target.getDuration());
           setVolume(event.target.getVolume());
@@ -214,8 +206,6 @@ export function YouTubePlayer({
         },
         onStateChange: (event) => {
           switch (event.data) {
-            case -1: // UNSTARTED
-              break;
             case 0: // ENDED
               setIsPlaying(false);
               setHasEnded(true);
@@ -247,7 +237,6 @@ export function YouTubePlayer({
     });
   }, [videoId]);
 
-  // Start time update interval
   const startTimeUpdate = useCallback(() => {
     if (timeUpdateInterval.current) {
       clearInterval(timeUpdateInterval.current);
@@ -261,7 +250,6 @@ export function YouTubePlayer({
     }, 250);
   }, [isSeeking]);
 
-  // Handle play/pause
   const togglePlay = useCallback(() => {
     if (!hasStarted) {
       initPlayer();
@@ -282,22 +270,30 @@ export function YouTubePlayer({
     }
   }, [hasStarted, hasEnded, isPlaying, initPlayer]);
 
-  // Handle seek
-  const handleSeek = useCallback((value: number[]) => {
-    const newTime = value[0];
-    setCurrentTime(newTime);
-    setIsSeeking(true);
-  }, []);
+  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressRef.current || !duration) return;
 
-  const handleSeekEnd = useCallback((value: number[]) => {
-    const newTime = value[0];
+    const rect = progressRef.current.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    const newTime = percent * duration;
+
     playerRef.current?.seekTo(newTime, true);
-    setIsSeeking(false);
-  }, []);
+    setCurrentTime(newTime);
+  }, [duration]);
 
-  // Handle volume
-  const handleVolumeChange = useCallback((value: number[]) => {
-    const newVolume = value[0];
+  const handleProgressHover = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressRef.current || !duration) return;
+
+    const rect = progressRef.current.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    const time = percent * duration;
+
+    setHoverTime(time);
+    setHoverPosition(e.clientX - rect.left);
+  }, [duration]);
+
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseInt(e.target.value);
     setVolume(newVolume);
     playerRef.current?.setVolume(newVolume);
     if (newVolume === 0) {
@@ -320,7 +316,13 @@ export function YouTubePlayer({
     }
   }, [isMuted, volume]);
 
-  // Handle fullscreen
+  const skip = useCallback((seconds: number) => {
+    if (!playerRef.current) return;
+    const newTime = Math.max(0, Math.min(duration, currentTime + seconds));
+    playerRef.current.seekTo(newTime, true);
+    setCurrentTime(newTime);
+  }, [currentTime, duration]);
+
   const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
 
@@ -335,7 +337,6 @@ export function YouTubePlayer({
     }
   }, []);
 
-  // Handle mouse movement for controls visibility
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
 
@@ -350,7 +351,7 @@ export function YouTubePlayer({
     }
   }, [isPlaying]);
 
-  // Handle keyboard shortcuts
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!hasStarted) return;
@@ -363,19 +364,11 @@ export function YouTubePlayer({
           break;
         case "ArrowLeft":
           e.preventDefault();
-          playerRef.current?.seekTo(Math.max(0, currentTime - 10), true);
+          skip(-10);
           break;
         case "ArrowRight":
           e.preventDefault();
-          playerRef.current?.seekTo(Math.min(duration, currentTime + 10), true);
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          handleVolumeChange([Math.min(100, volume + 10)]);
-          break;
-        case "ArrowDown":
-          e.preventDefault();
-          handleVolumeChange([Math.max(0, volume - 10)]);
+          skip(10);
           break;
         case "m":
           e.preventDefault();
@@ -390,9 +383,8 @@ export function YouTubePlayer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasStarted, togglePlay, currentTime, duration, volume, handleVolumeChange, toggleMute, toggleFullscreen]);
+  }, [hasStarted, togglePlay, skip, toggleMute, toggleFullscreen]);
 
-  // Handle fullscreen change
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -402,19 +394,12 @@ export function YouTubePlayer({
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Cleanup
   useEffect(() => {
     return () => {
-      if (timeUpdateInterval.current) {
-        clearInterval(timeUpdateInterval.current);
-      }
-      if (controlsTimeout.current) {
-        clearTimeout(controlsTimeout.current);
-      }
+      if (timeUpdateInterval.current) clearInterval(timeUpdateInterval.current);
+      if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
       if (playerRef.current) {
-        try {
-          playerRef.current.destroy();
-        } catch (e) {}
+        try { playerRef.current.destroy(); } catch (e) {}
       }
     };
   }, []);
@@ -425,16 +410,16 @@ export function YouTubePlayer({
     <div
       ref={containerRef}
       className={cn(
-        "relative w-full h-full bg-black overflow-hidden group select-none",
+        "relative w-full h-full bg-neutral-950 overflow-hidden select-none",
         className
       )}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
-      {/* Player wrapper - YouTube iframe goes here */}
+      {/* Player wrapper */}
       <div className="player-wrapper absolute inset-0 pointer-events-none" />
 
-      {/* Click overlay to toggle play/pause */}
+      {/* Click to play/pause */}
       {hasStarted && (
         <div
           className="absolute inset-0 z-10 cursor-pointer"
@@ -442,13 +427,12 @@ export function YouTubePlayer({
         />
       )}
 
-      {/* Initial overlay - before video starts */}
+      {/* Initial State - Thumbnail with play button */}
       {!hasStarted && (
         <div
           className="absolute inset-0 flex items-center justify-center cursor-pointer z-20"
           onClick={togglePlay}
         >
-          {/* Thumbnail */}
           <img
             src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
             alt={title}
@@ -458,36 +442,36 @@ export function YouTubePlayer({
             }}
           />
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
+          {/* Subtle vignette */}
+          <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/50" />
+          <div className="absolute inset-0 bg-black/30" />
 
-          {/* Play button */}
-          <button className="relative z-30 w-20 h-20 rounded-full bg-[#00D4FF] hover:bg-[#00B8E6] flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-2xl">
-            <Play className="w-8 h-8 text-white ml-1" fill="white" />
-          </button>
+          {/* Play button - Hexagonal style */}
+          <div className="relative z-30 group">
+            <div className="w-24 h-24 relative flex items-center justify-center">
+              {/* Outer glow */}
+              <div className="absolute inset-0 bg-[#BFFF00]/20 rounded-2xl blur-xl group-hover:bg-[#BFFF00]/30 transition-all duration-500" />
 
-          {/* Branding */}
-          {showBranding && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-3 bg-black/60 backdrop-blur-sm rounded-xl p-4">
-              <div className="w-16 h-16 bg-black rounded-xl flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-10 h-10">
-                  <polygon points="30,20 70,50 30,80" fill="#BFFF00" />
-                  <polygon points="50,20 90,50 50,80" fill="#00D4FF" />
-                </svg>
+              {/* Main button */}
+              <div className="relative w-20 h-20 bg-gradient-to-br from-[#BFFF00] to-[#9ACC00] rounded-2xl flex items-center justify-center shadow-lg shadow-[#BFFF00]/25 group-hover:scale-110 group-hover:shadow-[#BFFF00]/40 transition-all duration-300 rotate-0 group-hover:rotate-3">
+                <Play className="w-9 h-9 text-black ml-1" fill="black" strokeWidth={0} />
               </div>
-              <span className="text-white text-sm font-medium">{brandingText}</span>
             </div>
-          )}
+          </div>
+
+          {/* Title at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+            <p className="text-white/90 text-lg font-medium">{title}</p>
+          </div>
         </div>
       )}
 
-      {/* End screen overlay */}
+      {/* End State - Replay */}
       {hasEnded && (
         <div
-          className="absolute inset-0 flex items-center justify-center cursor-pointer z-20"
+          className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer z-20"
           onClick={togglePlay}
         >
-          {/* Thumbnail */}
           <img
             src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
             alt={title}
@@ -497,91 +481,120 @@ export function YouTubePlayer({
             }}
           />
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
           {/* Replay button */}
-          <button className="relative z-30 w-20 h-20 rounded-full bg-[#00D4FF] hover:bg-[#00B8E6] flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-2xl">
-            <RotateCcw className="w-8 h-8 text-white" />
-          </button>
-
-          <p className="absolute bottom-20 text-white text-lg font-medium z-30">
-            Reproducir de nuevo
-          </p>
-
-          {/* Branding */}
-          {showBranding && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-3 bg-black/60 backdrop-blur-sm rounded-xl p-4">
-              <div className="w-16 h-16 bg-black rounded-xl flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-10 h-10">
-                  <polygon points="30,20 70,50 30,80" fill="#BFFF00" />
-                  <polygon points="50,20 90,50 50,80" fill="#00D4FF" />
-                </svg>
+          <div className="relative z-30 group mb-4">
+            <div className="w-24 h-24 relative flex items-center justify-center">
+              <div className="absolute inset-0 bg-[#BFFF00]/20 rounded-2xl blur-xl group-hover:bg-[#BFFF00]/30 transition-all duration-500" />
+              <div className="relative w-20 h-20 bg-gradient-to-br from-[#BFFF00] to-[#9ACC00] rounded-2xl flex items-center justify-center shadow-lg shadow-[#BFFF00]/25 group-hover:scale-110 transition-all duration-300">
+                <RotateCcw className="w-8 h-8 text-black" strokeWidth={2.5} />
               </div>
-              <span className="text-white text-sm font-medium">{brandingText}</span>
             </div>
-          )}
+          </div>
+
+          <p className="text-white text-xl font-semibold z-30">Ver de nuevo</p>
+          <p className="text-white/60 text-sm mt-1 z-30">{title}</p>
         </div>
       )}
 
-      {/* Loading indicator */}
+      {/* Loading */}
       {isLoading && hasStarted && (
         <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-          <Loader2 className="w-12 h-12 text-[#00D4FF] animate-spin" />
+          <div className="w-16 h-16 relative">
+            <div className="absolute inset-0 border-4 border-[#BFFF00]/20 rounded-full" />
+            <div className="absolute inset-0 border-4 border-transparent border-t-[#BFFF00] rounded-full animate-spin" />
+          </div>
         </div>
       )}
 
-      {/* Custom controls */}
+      {/* Controls */}
       {hasStarted && !hasEnded && (
         <div
           className={cn(
-            "absolute bottom-0 left-0 right-0 z-30 transition-opacity duration-300",
-            showControls ? "opacity-100" : "opacity-0"
+            "absolute bottom-0 left-0 right-0 z-30 transition-all duration-300",
+            showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}
         >
           {/* Gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
 
-          {/* Controls container */}
-          <div className="relative px-4 pb-3 pt-8">
+          <div className="relative px-4 pb-4 pt-12">
             {/* Progress bar */}
-            <div className="mb-3 group/progress">
-              <Slider
-                value={[currentTime]}
-                min={0}
-                max={duration || 100}
-                step={0.1}
-                onValueChange={handleSeek}
-                onValueCommit={handleSeekEnd}
-                className="cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:opacity-0 group-hover/progress:[&_[role=slider]]:opacity-100 [&_[role=slider]]:transition-opacity [&_[role=slider]]:bg-[#00D4FF] [&_[role=slider]]:border-0 [&>span:first-child]:h-1 group-hover/progress:[&>span:first-child]:h-1.5 [&>span:first-child]:transition-all [&>span:first-child]:bg-white/30 [&_[data-orientation=horizontal]>[data-orientation=horizontal]]:bg-[#00D4FF]"
+            <div
+              ref={progressRef}
+              className="relative h-6 flex items-center cursor-pointer group mb-2"
+              onClick={handleProgressClick}
+              onMouseMove={handleProgressHover}
+              onMouseLeave={() => setHoverTime(null)}
+            >
+              {/* Track background */}
+              <div className="absolute left-0 right-0 h-1 bg-white/20 rounded-full group-hover:h-1.5 transition-all" />
+
+              {/* Progress fill */}
+              <div
+                className="absolute left-0 h-1 bg-[#BFFF00] rounded-full group-hover:h-1.5 transition-all"
+                style={{ width: `${progress}%` }}
               />
+
+              {/* Thumb */}
+              <div
+                className="absolute w-3.5 h-3.5 bg-[#BFFF00] rounded-full shadow-lg shadow-black/50 opacity-0 group-hover:opacity-100 transition-all -translate-x-1/2"
+                style={{ left: `${progress}%` }}
+              />
+
+              {/* Hover time tooltip */}
+              {hoverTime !== null && (
+                <div
+                  className="absolute bottom-full mb-2 px-2 py-1 bg-neutral-800 text-white text-xs rounded font-medium -translate-x-1/2"
+                  style={{ left: hoverPosition }}
+                >
+                  {formatTime(hoverTime)}
+                </div>
+              )}
             </div>
 
             {/* Bottom controls */}
             <div className="flex items-center justify-between">
-              {/* Left controls */}
-              <div className="flex items-center gap-2">
+              {/* Left side */}
+              <div className="flex items-center gap-1">
                 {/* Play/Pause */}
                 <button
                   onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
                 >
                   {isPlaying ? (
-                    <Pause className="w-5 h-5 text-white" fill="white" />
+                    <Pause className="w-5 h-5 text-white" fill="white" strokeWidth={0} />
                   ) : (
-                    <Play className="w-5 h-5 text-white" fill="white" />
+                    <Play className="w-5 h-5 text-white ml-0.5" fill="white" strokeWidth={0} />
                   )}
+                </button>
+
+                {/* Skip back */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); skip(-10); }}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <SkipBack className="w-4 h-4 text-white" fill="white" strokeWidth={0} />
+                </button>
+
+                {/* Skip forward */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); skip(10); }}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <SkipForward className="w-4 h-4 text-white" fill="white" strokeWidth={0} />
                 </button>
 
                 {/* Volume */}
                 <div
-                  className="flex items-center gap-1"
+                  className="flex items-center"
                   onMouseEnter={() => setShowVolumeSlider(true)}
                   onMouseLeave={() => setShowVolumeSlider(false)}
                 >
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleMute(); }}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
                   >
                     {isMuted || volume === 0 ? (
                       <VolumeX className="w-5 h-5 text-white" />
@@ -592,32 +605,34 @@ export function YouTubePlayer({
 
                   <div className={cn(
                     "overflow-hidden transition-all duration-200",
-                    showVolumeSlider ? "w-20 opacity-100" : "w-0 opacity-0"
+                    showVolumeSlider ? "w-20 opacity-100 ml-1" : "w-0 opacity-0"
                   )}>
-                    <Slider
-                      value={[isMuted ? 0 : volume]}
-                      min={0}
-                      max={100}
-                      step={1}
-                      onValueChange={handleVolumeChange}
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={isMuted ? 0 : volume}
+                      onChange={handleVolumeChange}
                       onClick={(e) => e.stopPropagation()}
-                      className="cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_[role=slider]]:bg-white [&_[role=slider]]:border-0 [&>span:first-child]:h-1 [&>span:first-child]:bg-white/30 [&_[data-orientation=horizontal]>[data-orientation=horizontal]]:bg-white"
+                      className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md"
                     />
                   </div>
                 </div>
 
                 {/* Time */}
-                <span className="text-white text-sm ml-2 tabular-nums">
-                  {formatTime(currentTime)} / {formatTime(duration)}
+                <span className="text-white/90 text-sm ml-2 tabular-nums font-medium">
+                  {formatTime(currentTime)}
+                  <span className="text-white/50 mx-1">/</span>
+                  {formatTime(duration)}
                 </span>
               </div>
 
-              {/* Right controls */}
+              {/* Right side */}
               <div className="flex items-center gap-1">
                 {/* Fullscreen */}
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
                 >
                   {isFullscreen ? (
                     <Minimize className="w-5 h-5 text-white" />
@@ -631,15 +646,15 @@ export function YouTubePlayer({
         </div>
       )}
 
-      {/* Branding overlay during playback - optional small logo */}
-      {hasStarted && !hasEnded && showBranding && showControls && (
-        <div className="absolute top-4 right-4 z-20 opacity-70 pointer-events-none">
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-lg px-3 py-1.5">
-            <svg viewBox="0 0 100 100" className="w-5 h-5">
-              <polygon points="30,20 70,50 30,80" fill="#BFFF00" />
-              <polygon points="50,20 90,50 50,80" fill="#00D4FF" />
-            </svg>
-            <span className="text-white text-xs font-medium">{brandingText}</span>
+      {/* Minimal branding - only small watermark */}
+      {hasStarted && !hasEnded && showControls && (
+        <div className="absolute top-4 left-4 z-20 pointer-events-none">
+          <div className="flex items-center gap-2 opacity-50">
+            <div className="w-6 h-6 bg-[#BFFF00] rounded flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-4 h-4">
+                <polygon points="8,5 19,12 8,19" fill="black" />
+              </svg>
+            </div>
           </div>
         </div>
       )}
