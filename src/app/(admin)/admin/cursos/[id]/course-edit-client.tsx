@@ -996,6 +996,12 @@ export function CourseEditClient({ course, mentors }: Props) {
                                   <div className="flex items-center gap-3">
                                     <Play className="w-4 h-4 text-muted-foreground" />
                                     <span className="text-sm">{lesson.title}</span>
+                                    {lesson.resources && lesson.resources.length > 0 && (
+                                      <div className="flex items-center gap-1 text-[#BFFF00]" title={`${lesson.resources.length} archivo(s) adjunto(s)`}>
+                                        <Paperclip className="w-3.5 h-3.5" />
+                                        <span className="text-xs">{lesson.resources.length}</span>
+                                      </div>
+                                    )}
                                     {!lesson.published && (
                                       <Badge variant="secondary" className="text-xs">
                                         Borrador
