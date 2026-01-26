@@ -367,8 +367,10 @@ export function LearnClient({
         return <Badge className="bg-red-500 text-white text-xs">Admin</Badge>;
       case "MENTOR":
         return <Badge className="bg-[#BFFF00] text-black text-xs">Mentor</Badge>;
+      case "STUDENT":
+        return <Badge variant="outline" className="text-xs">Estudiante</Badge>;
       default:
-        return null;
+        return <Badge variant="secondary" className="text-xs">Usuario</Badge>;
     }
   };
 
