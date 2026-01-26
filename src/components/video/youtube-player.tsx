@@ -173,8 +173,8 @@ export function YouTubePlayer({
     playerDiv.style.position = "absolute";
     playerDiv.style.top = "0";
     playerDiv.style.left = "0";
-    playerDiv.style.width = "100%";
-    playerDiv.style.height = "100%";
+    playerDiv.style.width = "calc(100% + 2px)";
+    playerDiv.style.height = "calc(100% + 140px)"; // Extra height to crop YouTube controls
 
     const playerWrapper = container.querySelector(".player-wrapper");
     if (playerWrapper) {
@@ -416,21 +416,45 @@ export function YouTubePlayer({
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
-      {/* Player wrapper */}
-      <div className="player-wrapper absolute inset-0 pointer-events-none" />
+      {/* CSS to hide YouTube elements */}
+      <style>{`
+        .player-wrapper iframe {
+          pointer-events: none !important;
+        }
+        .player-wrapper {
+          overflow: hidden;
+        }
+      `}</style>
 
-      {/* Click to play/pause */}
+      {/* Player wrapper - cropped to hide YouTube UI */}
+      <div
+        className="player-wrapper absolute pointer-events-none"
+        style={{
+          top: '-60px',
+          left: '-1px',
+          right: '-1px',
+          bottom: '-80px',
+          overflow: 'hidden'
+        }}
+      />
+
+      {/* Full overlay to block YouTube interactions and cover edges */}
+      <div className="absolute inset-0 z-10" />
+
+      {/* Click to play/pause - positioned above everything except controls */}
       {hasStarted && (
         <div
-          className="absolute inset-0 z-10 cursor-pointer"
+          className="absolute inset-0 z-15 cursor-pointer"
           onClick={togglePlay}
+          style={{ zIndex: 15 }}
         />
       )}
 
       {/* Initial State - Thumbnail with play button */}
       {!hasStarted && (
         <div
-          className="absolute inset-0 flex items-center justify-center cursor-pointer z-20"
+          className="absolute inset-0 flex items-center justify-center cursor-pointer"
+          style={{ zIndex: 25 }}
           onClick={togglePlay}
         >
           <img
@@ -469,7 +493,8 @@ export function YouTubePlayer({
       {/* End State - Replay */}
       {hasEnded && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer z-20"
+          className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer"
+          style={{ zIndex: 25 }}
           onClick={togglePlay}
         >
           <img
@@ -500,7 +525,7 @@ export function YouTubePlayer({
 
       {/* Loading */}
       {isLoading && hasStarted && (
-        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 35 }}>
           <div className="w-16 h-16 relative">
             <div className="absolute inset-0 border-4 border-[#BFFF00]/20 rounded-full" />
             <div className="absolute inset-0 border-4 border-transparent border-t-[#BFFF00] rounded-full animate-spin" />
@@ -512,9 +537,10 @@ export function YouTubePlayer({
       {hasStarted && !hasEnded && (
         <div
           className={cn(
-            "absolute bottom-0 left-0 right-0 z-30 transition-all duration-300",
+            "absolute bottom-0 left-0 right-0 transition-all duration-300",
             showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}
+          style={{ zIndex: 30 }}
         >
           {/* Gradient background */}
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
@@ -648,7 +674,7 @@ export function YouTubePlayer({
 
       {/* Minimal branding - only small watermark */}
       {hasStarted && !hasEnded && showControls && (
-        <div className="absolute top-4 left-4 z-20 pointer-events-none">
+        <div className="absolute top-4 left-4 pointer-events-none" style={{ zIndex: 25 }}>
           <div className="flex items-center gap-2 opacity-50">
             <div className="w-6 h-6 bg-[#BFFF00] rounded flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-4 h-4">
