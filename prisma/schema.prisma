@@ -109,6 +109,8 @@ model User {
   reports        Report[]        @relation("ReportedBy")
   auditLogs      AuditLog[]
   notifications  Notification[]
+  lessonComments     LessonComment[]
+  lessonCommentLikes LessonCommentLike[]
 
   // Courses created (for mentors)
   coursesCreated Course[]    @relation("CourseCreator")
@@ -276,6 +278,7 @@ model Lesson {
   progress    LessonProgress[]
   userNotes   LessonNote[]
   bookmarks   Bookmark[]
+  comments    LessonComment[]
 
   @@index([moduleId])
 }
@@ -350,6 +353,45 @@ model LessonNote {
 
   @@index([userId])
   @@index([lessonId])
+}
+
+// ============================================
+// LESSON COMMENTS / DISCUSSIONS
+// ============================================
+
+model LessonComment {
+  id           String   @id @default(cuid())
+  lessonId     String
+  authorId     String
+  content      String   @db.Text
+  parentId     String?  // Para respuestas anidadas
+  attachments  Json?    // Array de URLs de archivos adjuntos [{url, type, name, size}]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  lesson  Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  author  User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  LessonComment?  @relation("LessonCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies LessonComment[] @relation("LessonCommentReplies")
+  likes   LessonCommentLike[]
+
+  @@index([lessonId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+}
+
+model LessonCommentLike {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment LessonComment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId])
 }
 
 model Bookmark {
