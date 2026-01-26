@@ -32,7 +32,7 @@ export default async function CertificadosPage() {
             <Award className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Aún no tienes certificados</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Completa un curso al 100% y aprueba el quiz final para obtener tu certificado verificable.
+              Completa un curso al 100% para obtener tu certificado verificable.
             </p>
             <Button asChild>
               <Link href="/app/cursos">Explorar cursos</Link>
@@ -63,18 +63,15 @@ export default async function CertificadosPage() {
                   <code className="bg-surface-2 px-2 py-0.5 rounded">{cert.verificationCode}</code>
                 </div>
                 <div className="flex gap-2">
-                  {cert.pdfUrl && (
-                    <Button variant="outline" size="sm" className="flex-1" asChild>
-                      <a href={cert.pdfUrl} target="_blank" rel="noopener noreferrer">
-                        <Download className="w-4 h-4 mr-2" />
-                        PDF
-                      </a>
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" className="flex-1" asChild>
+                  <Button size="sm" className="flex-1 bg-[#BFFF00] text-black hover:bg-[#BFFF00]/90" asChild>
+                    <Link href={`/app/certificados/${cert.id}`}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Ver / Descargar
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
                     <Link href={`/certificados/verificar/${cert.verificationCode}`}>
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Verificar
+                      <ExternalLink className="w-4 h-4" />
                     </Link>
                   </Button>
                 </div>

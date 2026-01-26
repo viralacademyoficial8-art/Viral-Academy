@@ -233,6 +233,32 @@ export default async function LearnPage({ params, searchParams }: Props) {
   const completedCount = allLessons.filter((l) => progressMap.get(l.id)?.completed).length;
   const progress = Math.round((completedCount / allLessons.length) * 100);
 
+  // Get user profile for student name
+  const userProfile = await prisma.profile.findUnique({
+    where: { userId },
+    select: {
+      displayName: true,
+      firstName: true,
+      lastName: true,
+    },
+  });
+
+  const studentName = userProfile?.displayName ||
+    (userProfile?.firstName && userProfile?.lastName
+      ? `${userProfile.firstName} ${userProfile.lastName}`
+      : session.user.email?.split("@")[0] || "Estudiante");
+
+  // Check if user already has certificate for this course
+  const existingCertificate = await prisma.certificate.findUnique({
+    where: {
+      userId_courseId: {
+        userId,
+        courseId: course.id,
+      },
+    },
+    select: { id: true },
+  });
+
   return (
     <LearnClient
       course={{
@@ -249,6 +275,8 @@ export default async function LearnPage({ params, searchParams }: Props) {
       completedCount={completedCount}
       totalLessons={allLessons.length}
       userId={userId}
+      studentName={studentName}
+      hasCertificate={!!existingCertificate}
     />
   );
 }
