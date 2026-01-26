@@ -27,6 +27,7 @@ export async function getPosts(categorySlug?: string, limit?: number) {
           select: {
             id: true,
             email: true,
+            role: true,
             profile: { select: { displayName: true, avatar: true } },
           },
         },
