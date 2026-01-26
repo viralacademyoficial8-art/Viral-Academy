@@ -18,6 +18,7 @@ interface Course {
   shortDesc: string;
   level: string;
   category: string;
+  categoryId?: string | null;
   mentor: string;
   duration: number;
   enrolled: boolean;
@@ -26,19 +27,59 @@ interface Course {
   thumbnail: string | null;
 }
 
-interface CoursesClientProps {
-  courses: Course[];
+interface CategoryItem {
+  key: string;
+  label: string;
+  color?: string | null;
 }
 
-export function CoursesClient({ courses }: CoursesClientProps) {
+interface CoursesClientProps {
+  courses: Course[];
+  categories?: CategoryItem[];
+}
+
+export function CoursesClient({ courses, categories = [] }: CoursesClientProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+
+  // Create a map for category display - prioritize database categories, fallback to legacy
+  const categoryMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    // Add database categories
+    categories.forEach((cat) => {
+      map[cat.key] = cat.label;
+    });
+    // Add legacy categories as fallback
+    Object.entries(COURSE_CATEGORIES).forEach(([key, label]) => {
+      if (!map[key]) {
+        map[key] = label;
+      }
+    });
+    return map;
+  }, [categories]);
+
+  // Use database categories for filter buttons (ordered), with fallback to legacy
+  const displayCategories = React.useMemo(() => {
+    if (categories.length > 0) {
+      return categories;
+    }
+    // Fallback to legacy categories
+    return Object.entries(COURSE_CATEGORIES).map(([key, label]) => ({
+      key,
+      label,
+      color: null,
+    }));
+  }, [categories]);
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !selectedCategory || course.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const getCategoryLabel = (categoryKey: string) => {
+    return categoryMap[categoryKey] || categoryKey;
+  };
 
   return (
     <div className="space-y-8">
@@ -84,15 +125,15 @@ export function CoursesClient({ courses }: CoursesClientProps) {
           >
             Todos
           </Button>
-          {Object.entries(COURSE_CATEGORIES).map(([key, label]) => (
+          {displayCategories.map((cat) => (
             <Button
-              key={key}
-              variant={selectedCategory === key ? "default" : "outline"}
+              key={cat.key}
+              variant={selectedCategory === cat.key ? "default" : "outline"}
               size="sm"
-              onClick={() => setSelectedCategory(selectedCategory === key ? null : key)}
+              onClick={() => setSelectedCategory(selectedCategory === cat.key ? null : cat.key)}
               className="rounded-full"
             >
-              {label}
+              {cat.label}
             </Button>
           ))}
         </div>
@@ -101,7 +142,7 @@ export function CoursesClient({ courses }: CoursesClientProps) {
         <p className="text-sm text-muted-foreground">
           {filteredCourses.length} {filteredCourses.length === 1 ? "curso encontrado" : "cursos encontrados"}
           {searchQuery && ` para "${searchQuery}"`}
-          {selectedCategory && ` en ${COURSE_CATEGORIES[selectedCategory as keyof typeof COURSE_CATEGORIES]}`}
+          {selectedCategory && ` en ${getCategoryLabel(selectedCategory)}`}
         </p>
       </motion.div>
 
@@ -132,7 +173,7 @@ export function CoursesClient({ courses }: CoursesClientProps) {
                   </div>
                   <CardContent className="p-5 space-y-4">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">{COURSE_CATEGORIES[course.category as keyof typeof COURSE_CATEGORIES] || course.category}</Badge>
+                      <Badge variant="secondary" className="text-xs">{getCategoryLabel(course.category)}</Badge>
                       <Badge variant="outline" className="text-xs">{COURSE_LEVELS[course.level as keyof typeof COURSE_LEVELS] || course.level}</Badge>
                     </div>
                     <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">{course.title}</h3>

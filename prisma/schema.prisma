@@ -208,6 +208,30 @@ model Subscription {
 }
 
 // ============================================
+// COURSE CATEGORIES (Admin Managed)
+// ============================================
+
+model CourseCat {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  icon        String?  // Lucide icon name
+  color       String?  // Hex color for badge
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses Course[]
+
+  @@map("CourseCategories")
+  @@index([slug])
+  @@index([order])
+  @@index([active])
+}
+
+// ============================================
 // COURSES & CONTENT
 // ============================================
 
@@ -221,6 +245,7 @@ model Course {
   coverImage  String?
   level       CourseLevel    @default(BEGINNER)
   category    String         @default("MARKETING")
+  categoryId  String?        // New: relation to CourseCategory
   mentorId    String
   published   Boolean        @default(false)
   featured    Boolean        @default(false)
@@ -231,17 +256,19 @@ model Course {
   updatedAt   DateTime       @updatedAt
 
   // Relations
-  mentor      User         @relation("CourseCreator", fields: [mentorId], references: [id])
-  modules     Module[]
-  resources   Resource[]
-  enrollments Enrollment[]
-  bookmarks   Bookmark[]
-  quiz        Quiz?
+  mentor       User       @relation("CourseCreator", fields: [mentorId], references: [id])
+  categoryRel  CourseCat? @relation(fields: [categoryId], references: [id])
+  modules      Module[]
+  resources    Resource[]
+  enrollments  Enrollment[]
+  bookmarks    Bookmark[]
+  quiz         Quiz?
   certificates Certificate[]
 
   @@index([slug])
   @@index([published])
   @@index([category])
+  @@index([categoryId])
   @@index([mentorId])
 }
 
