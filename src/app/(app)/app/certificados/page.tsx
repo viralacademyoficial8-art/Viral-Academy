@@ -1,4 +1,4 @@
-import { Award, Download, ExternalLink, Calendar } from "lucide-react";
+import { Award, Download, ExternalLink, Calendar, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getUserCertificates } from "@/lib/data/certificates";
+import { prisma } from "@/lib/prisma";
+import { GenerateCertificateButton } from "./generate-certificate-button";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,65 @@ export default async function CertificadosPage() {
     redirect("/auth/login");
   }
 
-  const certificates = await getUserCertificates(session.user.id);
+  const userId = session.user.id;
+  const certificates = await getUserCertificates(userId);
+
+  // Get courses completed at 100% without a certificate
+  const enrollments = await prisma.enrollment.findMany({
+    where: { userId },
+    include: {
+      course: {
+        include: {
+          modules: {
+            include: {
+              lessons: {
+                where: { published: true },
+                select: { id: true },
+              },
+            },
+          },
+          mentor: {
+            include: {
+              profile: {
+                select: { displayName: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Calculate progress for each course and find completed ones without certificate
+  const completedCoursesWithoutCert = [];
+
+  for (const enrollment of enrollments) {
+    const lessonIds = enrollment.course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    if (lessonIds.length === 0) continue;
+
+    const completedLessons = await prisma.lessonProgress.count({
+      where: {
+        userId,
+        lessonId: { in: lessonIds },
+        completed: true,
+      },
+    });
+
+    const progress = Math.round((completedLessons / lessonIds.length) * 100);
+
+    // Check if course is 100% complete and doesn't have a certificate
+    if (progress >= 100) {
+      const hasCertificate = certificates.some((c) => c.courseId === enrollment.courseId);
+      if (!hasCertificate) {
+        completedCoursesWithoutCert.push({
+          id: enrollment.course.id,
+          title: enrollment.course.title,
+          slug: enrollment.course.slug,
+          mentorName: enrollment.course.mentor.profile?.displayName || enrollment.course.mentor.email,
+        });
+      }
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -26,7 +86,35 @@ export default async function CertificadosPage() {
         </p>
       </div>
 
-      {certificates.length === 0 ? (
+      {/* Courses ready to generate certificate */}
+      {completedCoursesWithoutCert.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-[#BFFF00]" />
+            Cursos completados - ¡Genera tu certificado!
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {completedCoursesWithoutCert.map((course) => (
+              <Card key={course.id} className="border-[#BFFF00]/30 bg-[#BFFF00]/5">
+                <CardContent className="p-5 space-y-4">
+                  <div>
+                    <Badge className="bg-[#BFFF00] text-black mb-2">100% Completado</Badge>
+                    <h3 className="font-semibold line-clamp-2">{course.title}</h3>
+                    <p className="text-sm text-muted-foreground">{course.mentorName}</p>
+                  </div>
+                  <GenerateCertificateButton
+                    courseId={course.id}
+                    courseTitle={course.title}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Existing certificates */}
+      {certificates.length === 0 && completedCoursesWithoutCert.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Award className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
@@ -39,45 +127,51 @@ export default async function CertificadosPage() {
             </Button>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {certificates.map((cert) => (
-            <Card key={cert.id} className="overflow-hidden">
-              <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 relative flex items-center justify-center">
-                <Award className="w-20 h-20 text-primary/40" />
-                <Badge className="absolute top-3 right-3 bg-green-500">Verificado</Badge>
-              </div>
-              <CardContent className="p-5 space-y-4">
-                <div>
-                  <h3 className="font-semibold line-clamp-2">{cert.course.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {cert.course.mentor.profile?.displayName || cert.course.mentor.email}
-                  </p>
+      ) : certificates.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Award className="w-5 h-5 text-[#BFFF00]" />
+            Mis Certificados
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {certificates.map((cert) => (
+              <Card key={cert.id} className="overflow-hidden">
+                <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 relative flex items-center justify-center">
+                  <Award className="w-20 h-20 text-primary/40" />
+                  <Badge className="absolute top-3 right-3 bg-green-500">Verificado</Badge>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>Emitido el {new Date(cert.issuedAt).toLocaleDateString("es-MX")}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-muted-foreground">Código:</span>
-                  <code className="bg-surface-2 px-2 py-0.5 rounded">{cert.verificationCode}</code>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" className="flex-1 bg-[#BFFF00] text-black hover:bg-[#BFFF00]/90" asChild>
-                    <Link href={`/app/certificados/${cert.id}`}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Ver / Descargar
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/certificados/verificar/${cert.verificationCode}`}>
-                      <ExternalLink className="w-4 h-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                <CardContent className="p-5 space-y-4">
+                  <div>
+                    <h3 className="font-semibold line-clamp-2">{cert.course.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {cert.course.mentor.profile?.displayName || cert.course.mentor.email}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span>Emitido el {new Date(cert.issuedAt).toLocaleDateString("es-MX")}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-muted-foreground">Código:</span>
+                    <code className="bg-surface-2 px-2 py-0.5 rounded">{cert.verificationCode}</code>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1 bg-[#BFFF00] text-black hover:bg-[#BFFF00]/90" asChild>
+                      <Link href={`/app/certificados/${cert.id}`}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Ver / Descargar
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/certificados/verificar/${cert.verificationCode}`}>
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
     </div>
