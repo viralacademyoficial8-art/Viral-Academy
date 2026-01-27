@@ -80,9 +80,17 @@ interface Mentor {
   name: string;
 }
 
+interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  color?: string | null;
+}
+
 interface Props {
   courses: Course[];
   mentors: Mentor[];
+  categories: Category[];
 }
 
 const levelLabels: Record<string, string> = {
@@ -108,7 +116,7 @@ const categoryLabels: Record<string, string> = {
   BUSINESS: "Negocios",
 };
 
-export function CoursesAdminClient({ courses, mentors }: Props) {
+export function CoursesAdminClient({ courses, mentors, categories: initialCategories }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -125,12 +133,16 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
     failed: number;
     errors?: Array<{ title: string; error: string }>;
   } | null>(null);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [showNewCategoryForm, setShowNewCategoryForm] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
     description: "",
     level: "BEGINNER",
-    category: "MARKETING",
+    category: initialCategories[0]?.id || "MARKETING",
     mentorId: mentors[0]?.id || "",
     thumbnail: "",
   });
@@ -160,6 +172,40 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
       title,
       slug: generateSlug(title),
     });
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+
+    setIsCreatingCategory(true);
+    try {
+      const slug = generateSlug(newCategoryName);
+      const res = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newCategoryName.trim(),
+          slug,
+        }),
+      });
+
+      if (res.ok) {
+        const newCategory = await res.json();
+        setCategories((prev) => [...prev, newCategory]);
+        setFormData({ ...formData, category: newCategory.id });
+        setNewCategoryName("");
+        setShowNewCategoryForm(false);
+        toast.success("Categoría creada correctamente");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al crear categoría");
+      }
+    } catch (error) {
+      console.error("Error creating category:", error);
+      toast.error("Error al crear categoría");
+    } finally {
+      setIsCreatingCategory(false);
+    }
   };
 
   // Validate image dimensions (must be square 1:1)
@@ -282,11 +328,13 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
           slug: "",
           description: "",
           level: "BEGINNER",
-          category: "MARKETING",
+          category: categories[0]?.id || "MARKETING",
           mentorId: mentors[0]?.id || "",
           thumbnail: "",
         });
         setThumbnailError("");
+        setShowNewCategoryForm(false);
+        setNewCategoryName("");
         toast.success("Curso creado correctamente");
         router.refresh();
       } else {
@@ -568,7 +616,11 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
                   <Badge variant="outline">{levelLabels[course.level]}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{categoryLabels[course.category]}</Badge>
+                  <Badge variant="secondary">
+                    {categories.find((c) => c.id === course.category)?.name ||
+                      categoryLabels[course.category] ||
+                      course.category}
+                  </Badge>
                 </TableCell>
                 <TableCell>{course.mentor}</TableCell>
                 <TableCell className="text-center">
@@ -694,21 +746,76 @@ export function CoursesAdminClient({ courses, mentors }: Props) {
               </div>
               <div className="space-y-2">
                 <Label>Categoría</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(categoryLabels).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {!showNewCategoryForm ? (
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowNewCategoryForm(true)}
+                      title="Crear nueva categoría"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Nombre de la categoría"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateCategory();
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        onClick={handleCreateCategory}
+                        disabled={isCreatingCategory || !newCategoryName.trim()}
+                      >
+                        {isCreatingCategory ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setShowNewCategoryForm(false);
+                          setNewCategoryName("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Escribe el nombre y presiona + para crear
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-2">
