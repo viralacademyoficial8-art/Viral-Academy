@@ -29,6 +29,7 @@ export default async function MembresiaPage() {
           ? {
               status: subscription.status,
               currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() || null,
+              currentPeriodStart: subscription.currentPeriodStart?.toISOString() || null,
               cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
             }
           : null
