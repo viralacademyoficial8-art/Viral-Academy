@@ -809,19 +809,21 @@ export function LearnClient({
                 open={expandedModules.includes(module.id)}
                 onOpenChange={() => toggleModule(module.id)}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-muted/50 text-left">
-                  <div className="flex items-center gap-2">
-                    {expandedModules.includes(module.id) ? (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    )}
-                    <span className="font-medium text-sm">{module.title}</span>
+                <CollapsibleTrigger className="flex items-start justify-between w-full p-3 rounded-lg hover:bg-muted/50 text-left gap-2">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <div className="flex-shrink-0 mt-0.5">
+                      {expandedModules.includes(module.id) ? (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <span className="font-medium text-sm leading-tight">{module.title}</span>
                     {module.isComplete && (
-                      <Check className="w-4 h-4 text-[#BFFF00]" />
+                      <Check className="w-4 h-4 text-[#BFFF00] flex-shrink-0" />
                     )}
                   </div>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs flex-shrink-0">
                     {module.lessons.filter((l) => l.completed).length}/
                     {module.lessons.length}
                   </Badge>
@@ -865,13 +867,13 @@ export function LearnClient({
                         <div className="flex-1 min-w-0">
                           <p
                             className={cn(
-                              "text-sm truncate",
+                              "text-sm leading-tight",
                               lesson.id === currentLesson.id && "font-medium"
                             )}
                           >
                             {lesson.title}
                           </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                             {lesson.duration > 0 && (
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
