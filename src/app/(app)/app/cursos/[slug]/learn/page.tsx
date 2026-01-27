@@ -233,15 +233,22 @@ export default async function LearnPage({ params, searchParams }: Props) {
   const completedCount = allLessons.filter((l) => progressMap.get(l.id)?.completed).length;
   const progress = Math.round((completedCount / allLessons.length) * 100);
 
-  // Get user profile for student name
-  const userProfile = await prisma.profile.findUnique({
-    where: { userId },
+  // Get user profile and role for student name and permissions
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
     select: {
-      displayName: true,
-      firstName: true,
-      lastName: true,
+      role: true,
+      profile: {
+        select: {
+          displayName: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
     },
   });
+
+  const userProfile = user?.profile;
 
   const studentName = userProfile?.displayName ||
     (userProfile?.firstName && userProfile?.lastName
@@ -275,6 +282,7 @@ export default async function LearnPage({ params, searchParams }: Props) {
       completedCount={completedCount}
       totalLessons={allLessons.length}
       userId={userId}
+      userRole={user?.role}
       studentName={studentName}
       hasCertificate={!!existingCertificate}
     />

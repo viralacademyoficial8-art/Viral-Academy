@@ -20,6 +20,7 @@ import {
   Loader2,
   MessageCircle,
   Paperclip,
+  Pin,
   Play,
   Send,
   Trash2,
@@ -110,6 +111,7 @@ interface Comment {
   id: string;
   content: string;
   attachments: CommentAttachment[] | null;
+  pinned: boolean;
   createdAt: string;
   author: CommentAuthor;
   replies: Comment[];
@@ -126,6 +128,7 @@ interface Props {
   completedCount: number;
   totalLessons: number;
   userId?: string;
+  userRole?: string;
   studentName?: string;
   hasCertificate?: boolean;
 }
@@ -140,6 +143,7 @@ export function LearnClient({
   completedCount,
   totalLessons,
   userId,
+  userRole,
   studentName = "Estudiante",
   hasCertificate = false,
 }: Props) {
@@ -363,6 +367,48 @@ export function LearnClient({
     }
   };
 
+  // Pin/Unpin comment
+  const handlePinComment = async (commentId: string) => {
+    try {
+      const res = await fetch(`/api/lessons/comments/${commentId}/pin`, {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        toast.success("Comentario actualizado");
+        fetchComments();
+      } else {
+        toast.error("Error al fijar comentario");
+      }
+    } catch (error) {
+      console.error("Error pinning comment:", error);
+      toast.error("Error de conexión");
+    }
+  };
+
+  // Helper function to render text with clickable links
+  const renderContentWithLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#BFFF00] hover:underline break-all"
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   // Helper functions
   const getAuthorName = (author: CommentAuthor) => {
     if (author.profile?.displayName) return author.profile.displayName;
@@ -417,12 +463,17 @@ export function LearnClient({
   };
 
   // Comment Component
-  const CommentItem = ({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => {
+  const CommentItem = ({ comment, isReply = false, userRole }: { comment: Comment; isReply?: boolean; userRole?: string }) => {
     const isLiked = userId ? comment.likes.some((l) => l.userId === userId) : false;
     const isAuthor = userId === comment.author.id;
+    const canPin = userRole === "ADMIN" || userRole === "MENTOR";
 
     return (
-      <div className={cn("flex gap-3", isReply && "ml-10")}>
+      <div className={cn(
+        "flex gap-3",
+        isReply && "ml-10",
+        comment.pinned && !isReply && "bg-[#BFFF00]/5 border border-[#BFFF00]/20 rounded-lg p-3 -mx-3"
+      )}>
         <Avatar className="w-8 h-8 flex-shrink-0">
           <AvatarImage src={comment.author.profile?.avatar || undefined} />
           <AvatarFallback className="text-xs bg-muted">
@@ -431,11 +482,17 @@ export function LearnClient({
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            {comment.pinned && !isReply && (
+              <Badge className="bg-[#BFFF00] text-black text-xs gap-1">
+                <Pin className="w-3 h-3" />
+                Fijado
+              </Badge>
+            )}
             <span className="font-medium text-sm">{getAuthorName(comment.author)}</span>
             {getRoleBadge(comment.author.role)}
             <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
           </div>
-          <p className="text-sm mt-1 whitespace-pre-wrap">{comment.content}</p>
+          <p className="text-sm mt-1 whitespace-pre-wrap">{renderContentWithLinks(comment.content)}</p>
 
           {/* Attachments */}
           {comment.attachments && comment.attachments.length > 0 && (
@@ -489,6 +546,19 @@ export function LearnClient({
                 <Trash2 className="w-3 h-3" />
               </button>
             )}
+            {canPin && !isReply && (
+              <button
+                onClick={() => handlePinComment(comment.id)}
+                className={cn(
+                  "flex items-center gap-1 text-xs transition-colors",
+                  comment.pinned ? "text-[#BFFF00]" : "text-muted-foreground hover:text-[#BFFF00]"
+                )}
+                title={comment.pinned ? "Desfijar comentario" : "Fijar comentario"}
+              >
+                <Pin className={cn("w-3 h-3", comment.pinned && "fill-current")} />
+                {comment.pinned ? "Desfijar" : "Fijar"}
+              </button>
+            )}
           </div>
 
           {/* Reply input */}
@@ -519,7 +589,7 @@ export function LearnClient({
           {comment.replies && comment.replies.length > 0 && (
             <div className="mt-3 space-y-3">
               {comment.replies.map((reply) => (
-                <CommentItem key={reply.id} comment={reply} isReply />
+                <CommentItem key={reply.id} comment={reply} isReply userRole={userRole} />
               ))}
             </div>
           )}
@@ -716,7 +786,7 @@ export function LearnClient({
                 ) : (
                   <div className="space-y-4 pt-4 border-t">
                     {comments.map((comment) => (
-                      <CommentItem key={comment.id} comment={comment} />
+                      <CommentItem key={comment.id} comment={comment} userRole={userRole} />
                     ))}
                   </div>
                 )}
