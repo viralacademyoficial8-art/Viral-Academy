@@ -182,6 +182,14 @@ export function CourseEditClient({ course, mentors }: Props) {
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
 
+  // Module edit dialog
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [editModuleFormData, setEditModuleFormData] = useState({
+    title: "",
+    description: "",
+  });
+  const [isSavingModule, setIsSavingModule] = useState(false);
+
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) =>
       prev.includes(moduleId)
@@ -473,6 +481,51 @@ export function CourseEditClient({ course, mentors }: Props) {
       toast.error("Error de conexión");
     } finally {
       setIsCreatingLesson(false);
+    }
+  };
+
+  // Edit module
+  const handleEditModule = (module: Module) => {
+    setEditingModule(module);
+    setEditModuleFormData({
+      title: module.title,
+      description: "",
+    });
+  };
+
+  // Save module changes
+  const handleSaveModule = async () => {
+    if (!editingModule) return;
+
+    if (!editModuleFormData.title.trim()) {
+      toast.error("El título del módulo es requerido");
+      return;
+    }
+
+    setIsSavingModule(true);
+    try {
+      const res = await fetch(`/api/admin/modules/${editingModule.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editModuleFormData.title,
+          description: editModuleFormData.description || null,
+        }),
+      });
+
+      if (res.ok) {
+        setEditingModule(null);
+        toast.success("Módulo actualizado correctamente");
+        router.refresh();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Error al actualizar el módulo");
+      }
+    } catch (error) {
+      console.error("Error updating module:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setIsSavingModule(false);
     }
   };
 
@@ -947,6 +1000,18 @@ export function CourseEditClient({ course, mentors }: Props) {
                             className="h-8 w-8"
                             onClick={(e) => {
                               e.stopPropagation();
+                              handleEditModule(module);
+                            }}
+                            title="Editar módulo"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               openCreateLessonDialog(module.id);
                             }}
                             title="Agregar lección"
@@ -1383,6 +1448,62 @@ export function CourseEditClient({ course, mentors }: Props) {
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Subiendo...
+                </>
+              ) : (
+                "Guardar"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Module Dialog */}
+      <Dialog open={!!editingModule} onOpenChange={() => setEditingModule(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Módulo</DialogTitle>
+            <DialogDescription>
+              Modifica el título del módulo
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Título del Módulo *</Label>
+              <Input
+                value={editModuleFormData.title}
+                onChange={(e) =>
+                  setEditModuleFormData({ ...editModuleFormData, title: e.target.value })
+                }
+                placeholder="Ej: Introducción al Marketing Digital"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Descripción (opcional)</Label>
+              <Textarea
+                value={editModuleFormData.description}
+                onChange={(e) =>
+                  setEditModuleFormData({ ...editModuleFormData, description: e.target.value })
+                }
+                placeholder="Describe brevemente el contenido del módulo..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditingModule(null)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSaveModule}
+              disabled={isSavingModule || !editModuleFormData.title.trim()}
+            >
+              {isSavingModule ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Guardando...
                 </>
               ) : (
                 "Guardar"
