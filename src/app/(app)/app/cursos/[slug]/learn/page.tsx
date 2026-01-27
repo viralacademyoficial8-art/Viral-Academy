@@ -34,6 +34,22 @@ export default async function LearnPage({ params, searchParams }: Props) {
 
   const userId = session.user.id;
 
+  // Get user role and profile early for permission checks and display
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      role: true,
+      profile: {
+        select: {
+          displayName: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    },
+  });
+  const isAdmin = user?.role === "ADMIN";
+
   // Check enrollment - auto-enroll if not enrolled
   let enrollment = await prisma.enrollment.findUnique({
     where: {
@@ -117,6 +133,7 @@ export default async function LearnPage({ params, searchParams }: Props) {
 
   // Determine which lessons are locked
   // A lesson is locked if any previous module is not complete (except file-only lessons which are always accessible)
+  // ADMIN users can access all lessons without restrictions
   const lessonLockMap = new Map<string, boolean>();
   let allPreviousModulesComplete = true;
 
@@ -124,6 +141,12 @@ export default async function LearnPage({ params, searchParams }: Props) {
     const moduleLessons = module.lessons || [];
 
     moduleLessons.forEach((lesson) => {
+      // Admins can access all lessons
+      if (isAdmin) {
+        lessonLockMap.set(lesson.id, false);
+        return;
+      }
+
       const lessonWithResources = {
         videoUrl: lesson.videoUrl,
         resources: resourcesByLesson.get(lesson.id) || []
@@ -232,21 +255,6 @@ export default async function LearnPage({ params, searchParams }: Props) {
   // Calculate progress
   const completedCount = allLessons.filter((l) => progressMap.get(l.id)?.completed).length;
   const progress = Math.round((completedCount / allLessons.length) * 100);
-
-  // Get user profile and role for student name and permissions
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      role: true,
-      profile: {
-        select: {
-          displayName: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-    },
-  });
 
   const userProfile = user?.profile;
 
