@@ -147,6 +147,7 @@ export function CourseEditClient({ course, mentors }: Props) {
   const [lessonFormData, setLessonFormData] = useState({
     title: "",
     videoUrl: "",
+    duration: 0,
     published: true,
   });
 
@@ -165,6 +166,7 @@ export function CourseEditClient({ course, mentors }: Props) {
   const [newLessonFormData, setNewLessonFormData] = useState({
     title: "",
     videoUrl: "",
+    duration: 0,
     published: true,
   });
   const [videoUrlError, setVideoUrlError] = useState("");
@@ -319,6 +321,7 @@ export function CourseEditClient({ course, mentors }: Props) {
     setLessonFormData({
       title: lesson.title,
       videoUrl: lesson.videoUrl || "",
+      duration: lesson.duration || 0,
       published: lesson.published,
     });
     setExistingResources(lesson.resources || []);
@@ -439,6 +442,7 @@ export function CourseEditClient({ course, mentors }: Props) {
           moduleId: selectedModuleId,
           title: newLessonFormData.title,
           videoUrl: newLessonFormData.videoUrl || null,
+          duration: newLessonFormData.duration || 0,
           published: newLessonFormData.published,
         }),
       });
@@ -455,7 +459,7 @@ export function CourseEditClient({ course, mentors }: Props) {
 
         setIsCreateLessonOpen(false);
         setSelectedModuleId(null);
-        setNewLessonFormData({ title: "", videoUrl: "", published: true });
+        setNewLessonFormData({ title: "", videoUrl: "", duration: 0, published: true });
         setVideoUrlError("");
         setAttachments([]);
         toast.success("Lección creada correctamente");
@@ -636,7 +640,7 @@ export function CourseEditClient({ course, mentors }: Props) {
   // Open lesson creation dialog for specific module
   const openCreateLessonDialog = (moduleId: string) => {
     setSelectedModuleId(moduleId);
-    setNewLessonFormData({ title: "", videoUrl: "", published: true });
+    setNewLessonFormData({ title: "", videoUrl: "", duration: 0, published: true });
     setVideoUrlError("");
     setAttachments([]);
     setIsCreateLessonOpen(true);
@@ -1175,6 +1179,24 @@ export function CourseEditClient({ course, mentors }: Props) {
                 Solo URLs de YouTube (youtube.com o youtu.be)
               </p>
             </div>
+            <div className="space-y-2">
+              <Label>Duración (minutos)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={lessonFormData.duration || ""}
+                onChange={(e) =>
+                  setLessonFormData({
+                    ...lessonFormData,
+                    duration: parseInt(e.target.value) || 0,
+                  })
+                }
+                placeholder="Ej: 15"
+              />
+              <p className="text-xs text-muted-foreground">
+                Tiempo estimado de la lección en minutos
+              </p>
+            </div>
             <div className="flex items-center justify-between">
               <Label>Publicado</Label>
               <Button
@@ -1385,7 +1407,7 @@ export function CourseEditClient({ course, mentors }: Props) {
         setIsCreateLessonOpen(open);
         if (!open) {
           setSelectedModuleId(null);
-          setNewLessonFormData({ title: "", videoUrl: "", published: true });
+          setNewLessonFormData({ title: "", videoUrl: "", duration: 0, published: true });
           setVideoUrlError("");
         }
       }}>
@@ -1428,6 +1450,24 @@ export function CourseEditClient({ course, mentors }: Props) {
                   Solo URLs de YouTube (youtube.com o youtu.be)
                 </p>
               )}
+            </div>
+            <div className="space-y-2">
+              <Label>Duración (minutos)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={newLessonFormData.duration || ""}
+                onChange={(e) =>
+                  setNewLessonFormData({
+                    ...newLessonFormData,
+                    duration: parseInt(e.target.value) || 0,
+                  })
+                }
+                placeholder="Ej: 15"
+              />
+              <p className="text-xs text-muted-foreground">
+                Tiempo estimado de la lección en minutos
+              </p>
             </div>
             {/* Attachments Section */}
             <div className="space-y-2">
@@ -1510,7 +1550,7 @@ export function CourseEditClient({ course, mentors }: Props) {
               onClick={() => {
                 setIsCreateLessonOpen(false);
                 setSelectedModuleId(null);
-                setNewLessonFormData({ title: "", videoUrl: "", published: true });
+                setNewLessonFormData({ title: "", videoUrl: "", duration: 0, published: true });
                 setVideoUrlError("");
                 setAttachments([]);
               }}
