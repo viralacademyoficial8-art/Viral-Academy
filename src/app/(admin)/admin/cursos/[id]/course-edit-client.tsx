@@ -1180,22 +1180,71 @@ export function CourseEditClient({ course, mentors }: Props) {
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Duración (minutos)</Label>
-              <Input
-                type="number"
-                min="0"
-                value={lessonFormData.duration || ""}
-                onChange={(e) =>
-                  setLessonFormData({
-                    ...lessonFormData,
-                    duration: parseInt(e.target.value) || 0,
-                  })
-                }
-                placeholder="Ej: 15"
-              />
-              <p className="text-xs text-muted-foreground">
-                Tiempo estimado de la lección en minutos
-              </p>
+              <Label>Duración</Label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="99"
+                    value={Math.floor((lessonFormData.duration || 0) / 3600) || ""}
+                    onChange={(e) => {
+                      const hours = parseInt(e.target.value) || 0;
+                      const currentMinutes = Math.floor(((lessonFormData.duration || 0) % 3600) / 60);
+                      const currentSeconds = (lessonFormData.duration || 0) % 60;
+                      setLessonFormData({
+                        ...lessonFormData,
+                        duration: hours * 3600 + currentMinutes * 60 + currentSeconds,
+                      });
+                    }}
+                    placeholder="0"
+                    className="text-center"
+                  />
+                  <p className="text-xs text-muted-foreground text-center mt-1">Horas</p>
+                </div>
+                <span className="text-lg font-bold">:</span>
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={Math.floor(((lessonFormData.duration || 0) % 3600) / 60) || ""}
+                    onChange={(e) => {
+                      const minutes = Math.min(59, parseInt(e.target.value) || 0);
+                      const currentHours = Math.floor((lessonFormData.duration || 0) / 3600);
+                      const currentSeconds = (lessonFormData.duration || 0) % 60;
+                      setLessonFormData({
+                        ...lessonFormData,
+                        duration: currentHours * 3600 + minutes * 60 + currentSeconds,
+                      });
+                    }}
+                    placeholder="0"
+                    className="text-center"
+                  />
+                  <p className="text-xs text-muted-foreground text-center mt-1">Min</p>
+                </div>
+                <span className="text-lg font-bold">:</span>
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={(lessonFormData.duration || 0) % 60 || ""}
+                    onChange={(e) => {
+                      const seconds = Math.min(59, parseInt(e.target.value) || 0);
+                      const currentHours = Math.floor((lessonFormData.duration || 0) / 3600);
+                      const currentMinutes = Math.floor(((lessonFormData.duration || 0) % 3600) / 60);
+                      setLessonFormData({
+                        ...lessonFormData,
+                        duration: currentHours * 3600 + currentMinutes * 60 + seconds,
+                      });
+                    }}
+                    placeholder="0"
+                    className="text-center"
+                  />
+                  <p className="text-xs text-muted-foreground text-center mt-1">Seg</p>
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <Label>Publicado</Label>
@@ -1452,22 +1501,71 @@ export function CourseEditClient({ course, mentors }: Props) {
               )}
             </div>
             <div className="space-y-2">
-              <Label>Duración (minutos)</Label>
-              <Input
-                type="number"
-                min="0"
-                value={newLessonFormData.duration || ""}
-                onChange={(e) =>
-                  setNewLessonFormData({
-                    ...newLessonFormData,
-                    duration: parseInt(e.target.value) || 0,
-                  })
-                }
-                placeholder="Ej: 15"
-              />
-              <p className="text-xs text-muted-foreground">
-                Tiempo estimado de la lección en minutos
-              </p>
+              <Label>Duración</Label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="99"
+                    value={Math.floor((newLessonFormData.duration || 0) / 3600) || ""}
+                    onChange={(e) => {
+                      const hours = parseInt(e.target.value) || 0;
+                      const currentMinutes = Math.floor(((newLessonFormData.duration || 0) % 3600) / 60);
+                      const currentSeconds = (newLessonFormData.duration || 0) % 60;
+                      setNewLessonFormData({
+                        ...newLessonFormData,
+                        duration: hours * 3600 + currentMinutes * 60 + currentSeconds,
+                      });
+                    }}
+                    placeholder="0"
+                    className="text-center"
+                  />
+                  <p className="text-xs text-muted-foreground text-center mt-1">Horas</p>
+                </div>
+                <span className="text-lg font-bold">:</span>
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={Math.floor(((newLessonFormData.duration || 0) % 3600) / 60) || ""}
+                    onChange={(e) => {
+                      const minutes = Math.min(59, parseInt(e.target.value) || 0);
+                      const currentHours = Math.floor((newLessonFormData.duration || 0) / 3600);
+                      const currentSeconds = (newLessonFormData.duration || 0) % 60;
+                      setNewLessonFormData({
+                        ...newLessonFormData,
+                        duration: currentHours * 3600 + minutes * 60 + currentSeconds,
+                      });
+                    }}
+                    placeholder="0"
+                    className="text-center"
+                  />
+                  <p className="text-xs text-muted-foreground text-center mt-1">Min</p>
+                </div>
+                <span className="text-lg font-bold">:</span>
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={(newLessonFormData.duration || 0) % 60 || ""}
+                    onChange={(e) => {
+                      const seconds = Math.min(59, parseInt(e.target.value) || 0);
+                      const currentHours = Math.floor((newLessonFormData.duration || 0) / 3600);
+                      const currentMinutes = Math.floor(((newLessonFormData.duration || 0) % 3600) / 60);
+                      setNewLessonFormData({
+                        ...newLessonFormData,
+                        duration: currentHours * 3600 + currentMinutes * 60 + seconds,
+                      });
+                    }}
+                    placeholder="0"
+                    className="text-center"
+                  />
+                  <p className="text-xs text-muted-foreground text-center mt-1">Seg</p>
+                </div>
+              </div>
             </div>
             {/* Attachments Section */}
             <div className="space-y-2">
