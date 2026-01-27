@@ -672,15 +672,21 @@ export function YouTubePlayer({
         </div>
       )}
 
-      {/* Minimal branding - only small watermark */}
-      {hasStarted && !hasEnded && showControls && (
-        <div className="absolute top-4 left-4 pointer-events-none" style={{ zIndex: 25 }}>
-          <div className="flex items-center gap-2 opacity-50">
-            <div className="w-6 h-6 bg-[#BFFF00] rounded flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-4 h-4">
-                <polygon points="8,5 19,12 8,19" fill="black" />
-              </svg>
-            </div>
+      {/* Center Play/Pause button - shown when paused or on hover */}
+      {hasStarted && !hasEnded && (
+        <div
+          className={cn(
+            "absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300",
+            showControls && !isPlaying ? "opacity-100" : "opacity-0"
+          )}
+          style={{ zIndex: 25 }}
+        >
+          <div className="w-20 h-20 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center">
+            {isPlaying ? (
+              <Pause className="w-10 h-10 text-white" fill="white" strokeWidth={0} />
+            ) : (
+              <Play className="w-10 h-10 text-white ml-1" fill="white" strokeWidth={0} />
+            )}
           </div>
         </div>
       )}
