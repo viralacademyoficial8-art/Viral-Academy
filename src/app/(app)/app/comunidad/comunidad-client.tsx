@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   MessageCircle,
@@ -97,7 +96,6 @@ const POST_TYPES: Record<string, { label: string; color: string }> = {
 };
 
 export function ComunidadClient({ categories, posts: initialPosts, userId, userRole }: ComunidadClientProps) {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [posts, setPosts] = React.useState(initialPosts);
@@ -146,13 +144,40 @@ export function ComunidadClient({ categories, posts: initialPosts, userId, userR
         throw new Error(data.error || "Error al crear publicación");
       }
 
+      // Find the category info for the new post
+      const categoryInfo = categories.find((c) => c.id === newPostCategory);
+
+      // Add the new post to the state immediately (at the beginning)
+      const newPost: Post = {
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        type: data.type,
+        pinned: data.pinned || false,
+        author: {
+          id: userId,
+          name: data.author?.name || data.author?.profile?.displayName || "Usuario",
+          avatar: data.author?.avatar || data.author?.profile?.avatar || null,
+          role: userRole,
+        },
+        category: {
+          slug: categoryInfo?.slug || "",
+          name: categoryInfo?.name || "",
+        },
+        commentsCount: 0,
+        likesCount: 0,
+        createdAt: data.createdAt || new Date().toISOString(),
+        isLiked: false,
+      };
+
+      setPosts((prev) => [newPost, ...prev]);
+
       toast.success("Publicación creada");
       setShowNewPostModal(false);
       setNewPostTitle("");
       setNewPostContent("");
       setNewPostCategory("");
       setNewPostType("GENERAL");
-      router.refresh();
     } catch (error) {
       console.error("Error creating post:", error);
       toast.error(error instanceof Error ? error.message : "Error al crear publicación");
