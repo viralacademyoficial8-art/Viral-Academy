@@ -421,6 +421,7 @@ model LessonComment {
   content      String   @db.Text
   parentId     String?  // Para respuestas anidadas
   attachments  Json?    // Array de URLs de archivos adjuntos [{url, type, name, size}]
+  pinned       Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

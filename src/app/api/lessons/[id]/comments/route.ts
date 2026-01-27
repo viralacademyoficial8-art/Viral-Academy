@@ -64,7 +64,10 @@ export async function GET(
           select: { userId: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { pinned: "desc" },  // Pinned comments first
+        { createdAt: "desc" },
+      ],
     });
 
     return NextResponse.json(comments);
