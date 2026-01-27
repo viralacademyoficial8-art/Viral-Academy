@@ -877,7 +877,10 @@ export function LearnClient({
                             {lesson.duration > 0 && (
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                {lesson.duration} min
+                                {lesson.duration >= 3600
+                                  ? `${Math.floor(lesson.duration / 3600)}:${String(Math.floor((lesson.duration % 3600) / 60)).padStart(2, '0')}:${String(lesson.duration % 60).padStart(2, '0')}`
+                                  : `${Math.floor(lesson.duration / 60)}:${String(lesson.duration % 60).padStart(2, '0')}`
+                                }
                               </span>
                             )}
                             {lesson.hasResources && (
