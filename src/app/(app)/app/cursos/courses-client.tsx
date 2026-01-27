@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { COURSE_LEVELS, COURSE_CATEGORIES, formatDuration } from "@/lib/utils";
+import { COURSE_LEVELS, COURSE_CATEGORIES, formatDurationFromSeconds } from "@/lib/utils";
 
 interface Course {
   id: string;
@@ -180,7 +180,7 @@ export function CoursesClient({ courses, categories = [] }: CoursesClientProps) 
                     <p className="text-sm text-muted-foreground line-clamp-2">{course.shortDesc}</p>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1"><User className="h-4 w-4" /><span>{course.mentor}</span></div>
-                      <div className="flex items-center gap-1"><Clock className="h-4 w-4" /><span>{formatDuration(course.duration)}</span></div>
+                      <div className="flex items-center gap-1"><Clock className="h-4 w-4" /><span>{formatDurationFromSeconds(course.duration)}</span></div>
                     </div>
                     {course.enrolled && course.progress > 0 ? (
                       <div className="space-y-2">

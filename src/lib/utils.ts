@@ -33,6 +33,16 @@ export function formatDuration(minutes: number): string {
   return `${hours}h ${remainingMinutes}min`;
 }
 
+export function formatDurationFromSeconds(seconds: number): string {
+  if (seconds < 60) return `${seconds} seg`;
+  const totalMinutes = Math.floor(seconds / 60);
+  if (totalMinutes < 60) return `${totalMinutes} min`;
+  const hours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+  if (remainingMinutes === 0) return `${hours}h`;
+  return `${hours}h ${remainingMinutes}min`;
+}
+
 export function slugify(text: string): string {
   return text.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "").replace(/--+/g, "-");

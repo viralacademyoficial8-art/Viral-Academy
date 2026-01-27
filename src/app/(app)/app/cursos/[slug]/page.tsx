@@ -62,6 +62,13 @@ export default async function CourseDetailPage({ params }: Props) {
     const completedCount = completedLessonIds.size;
     const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
+    // Calculate total duration from all lessons (in seconds)
+    const totalDurationSeconds = modules.reduce((courseTotal, mod) => {
+      return courseTotal + (mod.lessons || []).reduce((modTotal, lesson) => {
+        return modTotal + (lesson.duration || 0);
+      }, 0);
+    }, 0);
+
     const formattedCourse = {
       id: course.id,
       slug: course.slug,
@@ -73,7 +80,7 @@ export default async function CourseDetailPage({ params }: Props) {
       },
       level: course.level,
       category: course.category,
-      duration: course.duration || 0,
+      duration: totalDurationSeconds,
       lessonsCount: totalLessons,
       studentsCount: course._count?.enrollments || 0,
       progress,

@@ -40,6 +40,13 @@ export default async function CursosPage() {
     const rawShortDesc = course.shortDesc || course.description.substring(0, 150);
     const cleanDesc = stripHtml(rawShortDesc);
 
+    // Calculate total duration from all lessons (in seconds)
+    const totalDurationSeconds = course.modules.reduce((courseTotal, mod) => {
+      return courseTotal + mod.lessons.reduce((modTotal, lesson) => {
+        return modTotal + (lesson.duration || 0);
+      }, 0);
+    }, 0);
+
     return {
       id: course.id,
       slug: course.slug,
@@ -49,7 +56,7 @@ export default async function CursosPage() {
       category: course.category,
       categoryId: course.categoryId,
       mentor: course.mentor.profile?.displayName || course.mentor.email,
-      duration: course.duration || 0,
+      duration: totalDurationSeconds,
       enrolled: course.enrolled,
       progress: course.progress,
       featured: course.featured,
