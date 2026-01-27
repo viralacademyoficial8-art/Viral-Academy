@@ -18,6 +18,7 @@ import {
   BarChart3,
   Upload,
   Tags,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const navigation = [
   { name: "Lives", href: "/admin/lives", icon: Video },
   { name: "Suscripciones", href: "/admin/suscripciones", icon: CreditCard },
   { name: "Recursos", href: "/admin/recursos", icon: FileText },
+  { name: "Galería", href: "/admin/galeria", icon: Images },
   { name: "Migración", href: "/admin/migracion", icon: Upload },
   { name: "Configuración", href: "/admin/configuracion", icon: Settings },
 ];

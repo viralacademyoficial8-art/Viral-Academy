@@ -83,6 +83,23 @@ export async function POST(request: NextRequest) {
       addRandomSuffix: false,
     });
 
+    // Save to Media table for gallery tracking (optional - don't fail if table doesn't exist)
+    try {
+      await prisma.media.create({
+        data: {
+          filename: file.name,
+          url: blob.url,
+          type: file.type,
+          size: file.size,
+          folder: "courses",
+          uploadedBy: user.id,
+        },
+      });
+    } catch (dbError) {
+      // Media table might not exist yet - that's OK, continue without saving
+      console.log("Could not save to Media table:", dbError);
+    }
+
     return NextResponse.json({
       success: true,
       url: blob.url,
