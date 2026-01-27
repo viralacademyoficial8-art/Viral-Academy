@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createNotification } from "@/lib/notifications";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check if post exists and is not locked
     const post = await prisma.post.findUnique({
       where: { id: postId },
-      select: { locked: true },
+      select: { locked: true, authorId: true, title: true },
     });
 
     if (!post) {
@@ -79,10 +80,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // If parentId is provided, validate it belongs to this post
+    let parentComment = null;
     if (parentId) {
-      const parentComment = await prisma.comment.findUnique({
+      parentComment = await prisma.comment.findUnique({
         where: { id: parentId },
-        select: { postId: true },
+        select: { postId: true, authorId: true },
       });
 
       if (!parentComment || parentComment.postId !== postId) {
@@ -122,6 +124,34 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         },
       },
     });
+
+    // Send notifications
+    const commenterName = comment.author.profile?.displayName || comment.author.email;
+    const postTitle = post.title.substring(0, 40) + (post.title.length > 40 ? "..." : "");
+
+    if (parentId && parentComment) {
+      // This is a reply - notify the parent comment author
+      if (parentComment.authorId !== session.user.id) {
+        await createNotification({
+          userId: parentComment.authorId,
+          type: "COMMUNITY",
+          title: "Nueva respuesta a tu comentario",
+          message: `${commenterName} respondió a tu comentario en "${postTitle}"`,
+          link: `/app/comunidad/${postId}`,
+        });
+      }
+    } else {
+      // This is a top-level comment - notify the post author
+      if (post.authorId !== session.user.id) {
+        await createNotification({
+          userId: post.authorId,
+          type: "COMMUNITY",
+          title: "Nuevo comentario en tu publicación",
+          message: `${commenterName} comentó en "${postTitle}"`,
+          link: `/app/comunidad/${postId}`,
+        });
+      }
+    }
 
     return NextResponse.json(comment);
   } catch (error) {

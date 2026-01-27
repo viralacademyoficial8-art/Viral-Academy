@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createNotification } from "@/lib/notifications";
 
 interface RouteParams {
   params: Promise<{ commentId: string }>;
@@ -19,6 +20,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check if comment exists
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
+      include: {
+        post: { select: { id: true, title: true } },
+      },
     });
 
     if (!comment) {
@@ -49,6 +53,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           commentId,
         },
       });
+
+      // Notify comment author (if not liking own comment)
+      if (comment.authorId !== session.user.id) {
+        const liker = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { profile: { select: { displayName: true } }, email: true },
+        });
+        const likerName = liker?.profile?.displayName || liker?.email || "Alguien";
+        const postTitle = comment.post.title.substring(0, 40) + (comment.post.title.length > 40 ? "..." : "");
+
+        await createNotification({
+          userId: comment.authorId,
+          type: "COMMUNITY",
+          title: "Nuevo like en tu comentario",
+          message: `A ${likerName} le gustó tu comentario en "${postTitle}"`,
+          link: `/app/comunidad/${comment.post.id}`,
+        });
+      }
+
       return NextResponse.json({ liked: true });
     }
   } catch (error) {

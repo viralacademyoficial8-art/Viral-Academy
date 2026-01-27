@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyAllUsers } from "@/lib/notifications";
 
 // GET - Fetch all posts (with optional category filter)
 export async function GET(request: NextRequest) {
@@ -99,6 +100,18 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // If it's an announcement, notify all users
+    if (type === "ANNOUNCEMENT") {
+      const authorName = post.author.profile?.displayName || post.author.email;
+      await notifyAllUsers(
+        "COMMUNITY",
+        "Nuevo anuncio en la comunidad",
+        `${authorName} publicó: ${title.substring(0, 50)}${title.length > 50 ? "..." : ""}`,
+        `/app/comunidad/${post.id}`,
+        session.user.id // Exclude the author from notifications
+      );
+    }
 
     return NextResponse.json(post);
   } catch (error) {
