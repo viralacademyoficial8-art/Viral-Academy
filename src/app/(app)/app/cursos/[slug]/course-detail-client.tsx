@@ -23,7 +23,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { COURSE_LEVELS, COURSE_CATEGORIES, formatDuration } from "@/lib/utils";
+import { COURSE_LEVELS, COURSE_CATEGORIES, formatDurationFromSeconds } from "@/lib/utils";
 
 interface Lesson {
   id: string;
@@ -117,7 +117,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           </span>
           <span className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
-            {formatDuration(course.duration)}
+            {formatDurationFromSeconds(course.duration)}
           </span>
           <span className="flex items-center gap-2">
             <Play className="w-4 h-4" />
@@ -187,7 +187,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
             <CardHeader>
               <CardTitle>Contenido del curso</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {course.modules.length} módulos · {totalLessons} lecciones · {formatDuration(course.duration)}
+                {course.modules.length} módulos · {totalLessons} lecciones · {formatDurationFromSeconds(course.duration)}
               </p>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -207,7 +207,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       <div className="text-left">
                         <h4 className="font-medium">{module.title}</h4>
                         <p className="text-xs text-muted-foreground">
-                          {module.completedCount}/{module.lessonsCount} lecciones · {formatDuration(module.duration)}
+                          {module.completedCount}/{module.lessonsCount} lecciones · {formatDurationFromSeconds(module.duration)}
                         </p>
                       </div>
                     </div>
@@ -235,7 +235,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             </div>
                             <span className="text-sm">{lesson.title}</span>
                           </div>
-                          <span className="text-xs text-muted-foreground">{lesson.duration} min</span>
+                          <span className="text-xs text-muted-foreground">{formatDurationFromSeconds(lesson.duration)}</span>
                         </Link>
                       ))}
                     </div>
