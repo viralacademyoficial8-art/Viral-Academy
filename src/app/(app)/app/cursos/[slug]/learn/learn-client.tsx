@@ -638,7 +638,7 @@ export function LearnClient({
 
         {/* Scrollable content area */}
         <ScrollArea className="flex-1">
-          {/* Video Player or File-only view */}
+          {/* Video Player, Text Content, or File-only view */}
           {currentLesson.isFileOnly ? (
             <div className="bg-gradient-to-b from-muted/50 to-background p-8 flex items-center justify-center min-h-[300px]">
               <div className="text-center">
@@ -651,30 +651,51 @@ export function LearnClient({
                 </p>
               </div>
             </div>
+          ) : youtubeVideoId ? (
+            <div className="aspect-video bg-black flex items-center justify-center">
+              <YouTubePlayer
+                videoId={youtubeVideoId}
+                title={currentLesson.title}
+                className="w-full h-full"
+              />
+            </div>
+          ) : vimeoInfo ? (
+            <div className="aspect-video bg-black flex items-center justify-center">
+              <VimeoPlayer
+                videoId={vimeoInfo.videoId}
+                hash={vimeoInfo.hash}
+                title={currentLesson.title}
+                className="w-full h-full"
+              />
+            </div>
+          ) : currentLesson.notes ? (
+            <div className="bg-gradient-to-b from-muted/50 to-background p-6 md:p-8 min-h-[300px]">
+              <div className="max-w-3xl mx-auto">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-[#BFFF00]/20 rounded-xl flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-[#BFFF00]" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Contenido de la Lección</h2>
+                    <p className="text-sm text-muted-foreground">Lee las instrucciones a continuación</p>
+                  </div>
+                </div>
+                <div className="prose prose-invert prose-sm md:prose-base max-w-none bg-card/50 rounded-xl p-6 border">
+                  <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                    {currentLesson.notes}
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="aspect-video bg-black flex items-center justify-center">
-              {youtubeVideoId ? (
-                <YouTubePlayer
-                  videoId={youtubeVideoId}
-                  title={currentLesson.title}
-                  className="w-full h-full"
-                />
-              ) : vimeoInfo ? (
-                <VimeoPlayer
-                  videoId={vimeoInfo.videoId}
-                  hash={vimeoInfo.hash}
-                  title={currentLesson.title}
-                  className="w-full h-full"
-                />
-              ) : (
-                <div className="text-center text-white">
-                  <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg">No hay video disponible para esta lección</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    El video será agregado próximamente
-                  </p>
-                </div>
-              )}
+              <div className="text-center text-white">
+                <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">No hay video disponible para esta lección</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  El video será agregado próximamente
+                </p>
+              </div>
             </div>
           )}
 
