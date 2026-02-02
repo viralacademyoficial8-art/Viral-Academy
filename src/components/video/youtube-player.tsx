@@ -174,7 +174,7 @@ export function YouTubePlayer({
     playerDiv.style.top = "0";
     playerDiv.style.left = "0";
     playerDiv.style.width = "calc(100% + 2px)";
-    playerDiv.style.height = "calc(100% + 140px)"; // Extra height to crop YouTube controls
+    playerDiv.style.height = "calc(100% + 60px)"; // Reduced height - controls disabled via API
 
     const playerWrapper = container.querySelector(".player-wrapper");
     if (playerWrapper) {
@@ -426,14 +426,14 @@ export function YouTubePlayer({
         }
       `}</style>
 
-      {/* Player wrapper - cropped to hide YouTube UI */}
+      {/* Player wrapper - minimal cropping to hide YouTube branding */}
       <div
         className="player-wrapper absolute pointer-events-none"
         style={{
-          top: '-60px',
+          top: '-40px',
           left: '-1px',
           right: '-1px',
-          bottom: '-80px',
+          bottom: '-20px',
           overflow: 'hidden'
         }}
       />
