@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Loader2, SkipBack, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { deobfuscateVideoId } from "@/lib/video-obfuscation";
 
 // Extend Window interface for YouTube API
 declare global {
@@ -54,7 +55,7 @@ interface YouTubePlayerProps {
   className?: string;
 }
 
-// Extract YouTube video ID from various URL formats
+// Extract YouTube video ID from various URL formats (supports obfuscated IDs)
 export function getYouTubeVideoId(url: string): string | null {
   if (!url) return null;
 
@@ -65,8 +66,14 @@ export function getYouTubeVideoId(url: string): string | null {
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match && match[1]) {
-      return match[1];
+      // Deobfuscate if the ID is obfuscated
+      return deobfuscateVideoId(match[1]);
     }
+  }
+
+  // Check if the URL itself is an obfuscated ID
+  if (url.startsWith('vob_')) {
+    return deobfuscateVideoId(url);
   }
 
   return null;
@@ -120,10 +127,13 @@ function loadYouTubeAPI(): Promise<void> {
 }
 
 export function YouTubePlayer({
-  videoId,
+  videoId: obfuscatedVideoId,
   title = "Video",
   className,
 }: YouTubePlayerProps) {
+  // Deobfuscate video ID (handles both obfuscated and plain IDs)
+  const videoId = useMemo(() => deobfuscateVideoId(obfuscatedVideoId), [obfuscatedVideoId]);
+
   // Player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

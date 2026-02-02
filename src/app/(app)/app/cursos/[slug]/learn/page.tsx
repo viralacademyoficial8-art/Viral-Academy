@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCourseBySlug } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { LearnClient } from "./learn-client";
+import { obfuscateVideoUrl } from "@/lib/video-obfuscation";
 
 export const dynamic = "force-dynamic";
 
@@ -194,7 +195,7 @@ export default async function LearnPage({ params, searchParams }: Props) {
     }
   }
 
-  // Format data for client with lock status
+  // Format data for client with lock status (video URLs are obfuscated)
   const formattedModules = modules.map((module) => ({
     id: module.id,
     title: module.title,
@@ -205,7 +206,7 @@ export default async function LearnPage({ params, searchParams }: Props) {
         id: lesson.id,
         title: lesson.title,
         duration: lesson.duration || 0,
-        videoUrl: lesson.videoUrl,
+        videoUrl: obfuscateVideoUrl(lesson.videoUrl || '') || null,
         completed: progressMap.get(lesson.id)?.completed || false,
         isLocked: lessonLockMap.get(lesson.id) || false,
         isFileOnly: isFileOnlyLesson({ videoUrl: lesson.videoUrl, resources: lessonResources }),
@@ -229,7 +230,7 @@ export default async function LearnPage({ params, searchParams }: Props) {
     id: currentLesson.id,
     title: currentLesson.title,
     description: currentLesson.description || null,
-    videoUrl: currentLesson.videoUrl,
+    videoUrl: obfuscateVideoUrl(currentLesson.videoUrl || '') || null,
     duration: currentLesson.duration || 0,
     notes: currentLesson.notes || null,
     moduleTitle: currentLesson.moduleTitle,

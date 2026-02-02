@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, Loader2, SkipBack, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { deobfuscateVideoId } from "@/lib/video-obfuscation";
 
 interface VimeoPlayerProps {
   videoId: string;
@@ -11,9 +12,16 @@ interface VimeoPlayerProps {
   className?: string;
 }
 
-// Extract Vimeo video ID and hash from various URL/embed formats
+// Extract Vimeo video ID and hash from various URL/embed formats (supports obfuscated IDs)
 export function getVimeoVideoInfo(input: string): { videoId: string; hash?: string } | null {
   if (!input) return null;
+
+  // Check if the entire input is an obfuscated ID
+  if (input.startsWith('vob_')) {
+    const deobfuscated = deobfuscateVideoId(input);
+    // After deobfuscation, try to parse it again
+    return getVimeoVideoInfo(deobfuscated);
+  }
 
   // Pattern 1: Full embed code - extract src URL
   const iframeSrcMatch = input.match(/src=["']([^"']+)["']/);
@@ -21,25 +29,25 @@ export function getVimeoVideoInfo(input: string): { videoId: string; hash?: stri
     input = iframeSrcMatch[1];
   }
 
-  // Pattern 2: player.vimeo.com/video/ID?h=HASH
-  const playerMatch = input.match(/player\.vimeo\.com\/video\/(\d+)(?:\?h=([a-zA-Z0-9]+))?/);
+  // Pattern 2: player.vimeo.com/video/ID?h=HASH (ID might be obfuscated)
+  const playerMatch = input.match(/player\.vimeo\.com\/video\/([^?\/]+)(?:\?h=([a-zA-Z0-9]+))?/);
   if (playerMatch) {
     return {
-      videoId: playerMatch[1],
-      hash: playerMatch[2] || undefined,
+      videoId: deobfuscateVideoId(playerMatch[1]),
+      hash: playerMatch[2] ? deobfuscateVideoId(playerMatch[2]) : undefined,
     };
   }
 
   // Pattern 3: vimeo.com/ID or vimeo.com/ID/HASH
-  const vimeoMatch = input.match(/vimeo\.com\/(\d+)(?:\/([a-zA-Z0-9]+))?/);
+  const vimeoMatch = input.match(/vimeo\.com\/([^\/]+)(?:\/([a-zA-Z0-9]+))?/);
   if (vimeoMatch) {
     return {
-      videoId: vimeoMatch[1],
-      hash: vimeoMatch[2] || undefined,
+      videoId: deobfuscateVideoId(vimeoMatch[1]),
+      hash: vimeoMatch[2] ? deobfuscateVideoId(vimeoMatch[2]) : undefined,
     };
   }
 
-  // Pattern 4: Just the video ID
+  // Pattern 4: Just the video ID (might be obfuscated)
   if (/^\d+$/.test(input.trim())) {
     return { videoId: input.trim() };
   }
@@ -147,11 +155,15 @@ interface VimeoPlayer {
 }
 
 export function VimeoPlayer({
-  videoId,
-  hash,
+  videoId: obfuscatedVideoId,
+  hash: obfuscatedHash,
   title = "Video",
   className,
 }: VimeoPlayerProps) {
+  // Deobfuscate video ID and hash (handles both obfuscated and plain IDs)
+  const videoId = useMemo(() => deobfuscateVideoId(obfuscatedVideoId), [obfuscatedVideoId]);
+  const hash = useMemo(() => obfuscatedHash ? deobfuscateVideoId(obfuscatedHash) : undefined, [obfuscatedHash]);
+
   // Player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
