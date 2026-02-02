@@ -183,8 +183,8 @@ export function YouTubePlayer({
     playerDiv.style.position = "absolute";
     playerDiv.style.top = "0";
     playerDiv.style.left = "0";
-    playerDiv.style.width = "calc(100% + 2px)";
-    playerDiv.style.height = "calc(100% + 60px)"; // Reduced height - controls disabled via API
+    playerDiv.style.width = "100%";
+    playerDiv.style.height = "100%"; // No cropping - show full video content
 
     const playerWrapper = container.querySelector(".player-wrapper");
     if (playerWrapper) {
@@ -436,16 +436,10 @@ export function YouTubePlayer({
         }
       `}</style>
 
-      {/* Player wrapper - minimal cropping to hide YouTube branding */}
+      {/* Player wrapper - full video display without cropping */}
       <div
-        className="player-wrapper absolute pointer-events-none"
-        style={{
-          top: '-40px',
-          left: '-1px',
-          right: '-1px',
-          bottom: '-20px',
-          overflow: 'hidden'
-        }}
+        className="player-wrapper absolute inset-0 pointer-events-none"
+        style={{ overflow: 'hidden' }}
       />
 
       {/* Full overlay to block YouTube interactions and cover edges */}
