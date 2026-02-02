@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
-  Zap,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -64,17 +64,27 @@ export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = fa
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
           <Link href="/app/dashboard" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-hover shadow-lg shadow-primary/25 flex-shrink-0">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            {!isCollapsed && (
-              <motion.span
+            {isCollapsed ? (
+              <Image
+                src="/images/logo-icon.png"
+                alt="Viral Academy"
+                width={36}
+                height={36}
+                className="h-9 w-9 flex-shrink-0"
+              />
+            ) : (
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="font-semibold text-lg whitespace-nowrap"
               >
-                Viral<span className="text-primary">Academy</span>
-              </motion.span>
+                <Image
+                  src="/images/logo-dark.png"
+                  alt="Viral Academy"
+                  width={140}
+                  height={36}
+                  className="h-8 w-auto"
+                />
+              </motion.div>
             )}
           </Link>
           {!isMobile && (

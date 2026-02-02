@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Zap, Shield } from "lucide-react";
+import { Menu, X, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { publicNavItems } from "@/config/navigation";
@@ -40,13 +41,15 @@ export function NavbarPublic() {
       <nav className="container-wide">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-hover shadow-lg shadow-primary/25">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-semibold text-lg tracking-tight">
-              Viral<span className="text-primary">Academy</span>
-            </span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/images/logo-dark.png"
+              alt="Viral Academy"
+              width={150}
+              height={40}
+              className="h-8 w-auto"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}
