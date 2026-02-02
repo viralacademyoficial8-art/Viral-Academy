@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   Users,
@@ -20,6 +21,8 @@ import {
   Upload,
   Tags,
   Images,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,7 +59,7 @@ const navigation = [
   { name: "Configuración", href: "/admin/configuracion", icon: Settings },
 ];
 
-function Sidebar({ className }: { className?: string }) {
+function Sidebar({ className, theme, mounted }: { className?: string; theme?: string; mounted?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -64,11 +67,11 @@ function Sidebar({ className }: { className?: string }) {
       <div className="p-4 border-b">
         <Link href="/admin" className="flex items-center gap-3">
           <Image
-            src="/images/logo-dark.png"
+            src={mounted && theme === "dark" ? "/images/logo-dark.png" : "/images/logo.png"}
             alt="Viral Academy"
-            width={160}
-            height={44}
-            className="h-10 w-auto"
+            width={200}
+            height={55}
+            className="h-12 w-auto"
           />
           <span className="text-xs text-muted-foreground bg-red-500/20 text-red-400 px-2 py-0.5 rounded">Admin</span>
         </Link>
@@ -110,6 +113,12 @@ function Sidebar({ className }: { className?: string }) {
 
 export function AdminLayoutClient({ children, user }: AdminLayoutClientProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+  const { theme, setTheme } = useTheme();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/auth/login" });
@@ -119,13 +128,13 @@ export function AdminLayoutClient({ children, user }: AdminLayoutClientProps) {
     <div className="min-h-screen bg-muted/30">
       {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64">
-        <Sidebar />
+        <Sidebar theme={theme} mounted={mounted} />
       </div>
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="p-0 w-64">
-          <Sidebar />
+          <Sidebar theme={theme} mounted={mounted} />
         </SheetContent>
       </Sheet>
 
@@ -143,6 +152,21 @@ export function AdminLayoutClient({ children, user }: AdminLayoutClientProps) {
             </Sheet>
 
             <div className="flex-1" />
+
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="h-9 w-9"
+            >
+              {mounted && theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+              <span className="sr-only">Cambiar tema</span>
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

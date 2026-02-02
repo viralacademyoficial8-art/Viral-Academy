@@ -5,8 +5,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Shield } from "lucide-react";
+import { Menu, X, Shield, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { publicNavItems } from "@/config/navigation";
@@ -15,11 +16,17 @@ import { UserMenu } from "./user-menu";
 export function NavbarPublic() {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const { theme, setTheme } = useTheme();
 
   const isLoggedIn = status === "authenticated" && !!session?.user;
   const isAdmin = session?.user?.role === "ADMIN";
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -40,14 +47,14 @@ export function NavbarPublic() {
     >
       <nav className="container-wide">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
+          {/* Logo - switches based on theme */}
           <Link href="/" className="flex items-center">
             <Image
-              src="/images/logo-dark.png"
+              src={mounted && theme === "dark" ? "/images/logo-dark.png" : "/images/logo.png"}
               alt="Viral Academy"
-              width={220}
-              height={60}
-              className="h-14 w-auto"
+              width={280}
+              height={75}
+              className="h-16 w-auto"
               priority
             />
           </Link>
@@ -86,8 +93,23 @@ export function NavbarPublic() {
             )}
           </div>
 
-          {/* CTA Buttons / User Menu */}
+          {/* Theme Toggle & CTA Buttons / User Menu */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="h-9 w-9"
+            >
+              {mounted && theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+              <span className="sr-only">Cambiar tema</span>
+            </Button>
+
             {status === "loading" ? (
               <div className="h-9 w-24 rounded-lg bg-surface-2 animate-pulse" />
             ) : isLoggedIn ? (
@@ -104,17 +126,31 @@ export function NavbarPublic() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 rounded-lg hover:bg-surface-2 transition-colors"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
+          {/* Mobile: Theme Toggle & Menu Button */}
+          <div className="md:hidden flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="h-9 w-9"
+            >
+              {mounted && theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+            <button
+              className="p-2 rounded-lg hover:bg-surface-2 transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
