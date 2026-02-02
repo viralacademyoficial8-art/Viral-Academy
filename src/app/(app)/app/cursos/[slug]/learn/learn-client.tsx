@@ -682,7 +682,7 @@ export function LearnClient({
                 </div>
                 <div className="prose prose-invert prose-sm md:prose-base max-w-none bg-card/50 rounded-xl p-6 border">
                   <div className="whitespace-pre-wrap text-foreground leading-relaxed">
-                    {currentLesson.notes}
+                    {renderContentWithLinks(currentLesson.notes)}
                   </div>
                 </div>
               </div>
