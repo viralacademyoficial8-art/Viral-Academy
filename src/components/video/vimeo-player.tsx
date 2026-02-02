@@ -142,8 +142,8 @@ interface VimeoPlayer {
   getMuted(): Promise<boolean>;
   setMuted(muted: boolean): Promise<boolean>;
   destroy(): void;
-  on(event: string, callback: (data?: unknown) => void): void;
-  off(event: string, callback?: (data?: unknown) => void): void;
+  on(event: string, callback: (data?: { seconds?: number; percent?: number; duration?: number }) => void): void;
+  off(event: string, callback?: (data?: { seconds?: number; percent?: number; duration?: number }) => void): void;
 }
 
 export function VimeoPlayer({
@@ -250,8 +250,10 @@ export function VimeoPlayer({
       setHasEnded(true);
     });
 
-    player.on("timeupdate", (data: { seconds: number }) => {
-      setCurrentTime(data.seconds);
+    player.on("timeupdate", (data) => {
+      if (data?.seconds !== undefined) {
+        setCurrentTime(data.seconds);
+      }
     });
 
     player.on("bufferstart", () => {
