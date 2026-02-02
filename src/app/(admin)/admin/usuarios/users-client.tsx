@@ -103,6 +103,8 @@ export function UsersClient({ users, stats }: UsersClientProps) {
     switch (role) {
       case "ADMIN":
         return <Badge variant="destructive">Admin</Badge>;
+      case "VIP":
+        return <Badge className="bg-amber-500 hover:bg-amber-500">VIP</Badge>;
       case "MENTOR":
         return <Badge variant="default">Mentor</Badge>;
       default:
@@ -463,6 +465,12 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                                 disabled={user.role === "STUDENT"}
                               >
                                 Estudiante
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleRoleChange(user.id, "VIP")}
+                                disabled={user.role === "VIP"}
+                              >
+                                VIP (Acceso gratuito)
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleRoleChange(user.id, "MENTOR")}

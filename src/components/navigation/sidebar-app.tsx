@@ -192,9 +192,11 @@ export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = fa
                 <p className="text-xs text-muted-foreground truncate">
                   {user?.role === "ADMIN"
                     ? "Administrador"
-                    : user?.subscriptionStatus === "ACTIVE"
-                      ? "Membresía activa"
-                      : "Sin membresía"}
+                    : user?.role === "VIP"
+                      ? "Acceso VIP"
+                      : user?.subscriptionStatus === "ACTIVE"
+                        ? "Membresía activa"
+                        : "Sin membresía"}
                 </p>
               </div>
             )}

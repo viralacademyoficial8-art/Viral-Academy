@@ -17,6 +17,7 @@ datasource db {
 enum Role {
   GUEST
   STUDENT
+  VIP       // Free access to all premium content without subscription
   MENTOR
   ADMIN
 }
