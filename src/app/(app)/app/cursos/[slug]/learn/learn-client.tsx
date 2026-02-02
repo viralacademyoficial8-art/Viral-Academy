@@ -655,6 +655,7 @@ export function LearnClient({
             <div className="w-full bg-black flex items-center justify-center">
               <div className="w-full max-h-[65vh] aspect-video">
                 <YouTubePlayer
+                  key={currentLesson.id}
                   videoId={youtubeVideoId}
                   title={currentLesson.title}
                   className="w-full h-full"
@@ -665,6 +666,7 @@ export function LearnClient({
             <div className="w-full bg-black flex items-center justify-center">
               <div className="w-full max-h-[65vh] aspect-video">
                 <VimeoPlayer
+                  key={currentLesson.id}
                   videoId={vimeoInfo.videoId}
                   hash={vimeoInfo.hash}
                   title={currentLesson.title}
