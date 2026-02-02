@@ -940,68 +940,91 @@ export function LearnClient({
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="ml-4 space-y-1">
-                    {module.lessons.map((lesson) => (
-                      <button
-                        key={lesson.id}
-                        onClick={() => navigateToLesson(lesson.id, lesson.isLocked)}
-                        disabled={lesson.isLocked}
-                        className={cn(
-                          "flex items-center gap-3 w-full p-3 rounded-lg text-left transition-colors",
-                          lesson.id === currentLesson.id
-                            ? "bg-primary/10 border border-primary/20"
-                            : lesson.isLocked
-                            ? "opacity-50 cursor-not-allowed"
-                            : "hover:bg-muted/50"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0",
-                            lesson.completed
-                              ? "bg-[#BFFF00] text-black"
-                              : lesson.isLocked
-                              ? "bg-muted border border-border"
-                              : "bg-muted border border-border"
-                          )}
-                        >
-                          {lesson.isLocked ? (
-                            <Lock className="w-3 h-3" />
-                          ) : lesson.completed ? (
-                            <Check className="w-3 h-3" />
-                          ) : lesson.isFileOnly ? (
-                            <FileText className="w-3 h-3" />
-                          ) : (
-                            <Play className="w-3 h-3" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p
+                    {module.lessons.map((lesson) => {
+                      const lessonContent = (
+                        <>
+                          <div
                             className={cn(
-                              "text-sm leading-tight",
-                              lesson.id === currentLesson.id && "font-medium"
+                              "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0",
+                              lesson.completed
+                                ? "bg-[#BFFF00] text-black"
+                                : lesson.isLocked
+                                ? "bg-muted border border-border"
+                                : "bg-muted border border-border"
                             )}
                           >
-                            {lesson.title}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                            {lesson.duration > 0 && (
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {lesson.duration >= 3600
-                                  ? `${Math.floor(lesson.duration / 3600)}:${String(Math.floor((lesson.duration % 3600) / 60)).padStart(2, '0')}:${String(lesson.duration % 60).padStart(2, '0')}`
-                                  : `${Math.floor(lesson.duration / 60)}:${String(lesson.duration % 60).padStart(2, '0')}`
-                                }
-                              </span>
-                            )}
-                            {lesson.hasResources && (
-                              <span className="flex items-center gap-1 text-[#BFFF00]">
-                                <Paperclip className="w-3 h-3" />
-                              </span>
+                            {lesson.isLocked ? (
+                              <Lock className="w-3 h-3" />
+                            ) : lesson.completed ? (
+                              <Check className="w-3 h-3" />
+                            ) : lesson.isFileOnly ? (
+                              <FileText className="w-3 h-3" />
+                            ) : (
+                              <Play className="w-3 h-3" />
                             )}
                           </div>
-                        </div>
-                      </button>
-                    ))}
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={cn(
+                                "text-sm leading-tight",
+                                lesson.id === currentLesson.id && "font-medium"
+                              )}
+                            >
+                              {lesson.title}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                              {lesson.duration > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {lesson.duration >= 3600
+                                    ? `${Math.floor(lesson.duration / 3600)}:${String(Math.floor((lesson.duration % 3600) / 60)).padStart(2, '0')}:${String(lesson.duration % 60).padStart(2, '0')}`
+                                    : `${Math.floor(lesson.duration / 60)}:${String(lesson.duration % 60).padStart(2, '0')}`
+                                  }
+                                </span>
+                              )}
+                              {lesson.hasResources && (
+                                <span className="flex items-center gap-1 text-[#BFFF00]">
+                                  <Paperclip className="w-3 h-3" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      );
+
+                      const lessonClasses = cn(
+                        "flex items-center gap-3 w-full p-3 rounded-lg text-left transition-colors",
+                        lesson.id === currentLesson.id
+                          ? "bg-primary/10 border border-primary/20"
+                          : lesson.isLocked
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-muted/50"
+                      );
+
+                      // Use Link for unlocked lessons, button for locked ones
+                      if (lesson.isLocked) {
+                        return (
+                          <button
+                            key={lesson.id}
+                            onClick={() => toast.error("Completa las lecciones anteriores para desbloquear esta")}
+                            disabled
+                            className={lessonClasses}
+                          >
+                            {lessonContent}
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={lesson.id}
+                          href={`/app/cursos/${course.slug}/learn?lesson=${lesson.id}`}
+                          className={lessonClasses}
+                        >
+                          {lessonContent}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
