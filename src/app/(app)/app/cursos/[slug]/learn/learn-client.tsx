@@ -652,21 +652,25 @@ export function LearnClient({
               </div>
             </div>
           ) : youtubeVideoId ? (
-            <div className="aspect-video bg-black flex items-center justify-center">
-              <YouTubePlayer
-                videoId={youtubeVideoId}
-                title={currentLesson.title}
-                className="w-full h-full"
-              />
+            <div className="w-full bg-black flex items-center justify-center">
+              <div className="w-full max-h-[65vh] aspect-video">
+                <YouTubePlayer
+                  videoId={youtubeVideoId}
+                  title={currentLesson.title}
+                  className="w-full h-full"
+                />
+              </div>
             </div>
           ) : vimeoInfo ? (
-            <div className="aspect-video bg-black flex items-center justify-center">
-              <VimeoPlayer
-                videoId={vimeoInfo.videoId}
-                hash={vimeoInfo.hash}
-                title={currentLesson.title}
-                className="w-full h-full"
-              />
+            <div className="w-full bg-black flex items-center justify-center">
+              <div className="w-full max-h-[65vh] aspect-video">
+                <VimeoPlayer
+                  videoId={vimeoInfo.videoId}
+                  hash={vimeoInfo.hash}
+                  title={currentLesson.title}
+                  className="w-full h-full"
+                />
+              </div>
             </div>
           ) : currentLesson.notes ? (
             <div className="bg-gradient-to-b from-muted/50 to-background p-6 md:p-8 min-h-[300px]">
@@ -688,13 +692,15 @@ export function LearnClient({
               </div>
             </div>
           ) : (
-            <div className="aspect-video bg-black flex items-center justify-center">
-              <div className="text-center text-white">
-                <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">No hay video disponible para esta lección</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  El video será agregado próximamente
-                </p>
+            <div className="w-full bg-black flex items-center justify-center">
+              <div className="w-full max-h-[65vh] aspect-video flex items-center justify-center">
+                <div className="text-center text-white">
+                  <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">No hay video disponible para esta lección</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    El video será agregado próximamente
+                  </p>
+                </div>
               </div>
             </div>
           )}
