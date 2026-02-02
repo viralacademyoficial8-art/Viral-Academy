@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { YouTubePlayer, getYouTubeVideoId } from "@/components/video/youtube-player";
+import { VimeoPlayer, getVimeoVideoInfo, isVimeoUrl } from "@/components/video/vimeo-player";
 import { CourseCompletionModal } from "@/components/certificate/course-completion-modal";
 
 interface Lesson {
@@ -169,8 +170,13 @@ export function LearnClient({
   const [attachments, setAttachments] = useState<File[]>([]);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
-  const videoId = currentLesson.videoUrl
+  // Determine video type and extract ID
+  const isVimeo = currentLesson.videoUrl ? isVimeoUrl(currentLesson.videoUrl) : false;
+  const youtubeVideoId = currentLesson.videoUrl && !isVimeo
     ? getYouTubeVideoId(currentLesson.videoUrl)
+    : null;
+  const vimeoInfo = currentLesson.videoUrl && isVimeo
+    ? getVimeoVideoInfo(currentLesson.videoUrl)
     : null;
 
   // Fetch comments
@@ -647,9 +653,16 @@ export function LearnClient({
             </div>
           ) : (
             <div className="aspect-video bg-black flex items-center justify-center">
-              {videoId ? (
+              {youtubeVideoId ? (
                 <YouTubePlayer
-                  videoId={videoId}
+                  videoId={youtubeVideoId}
+                  title={currentLesson.title}
+                  className="w-full h-full"
+                />
+              ) : vimeoInfo ? (
+                <VimeoPlayer
+                  videoId={vimeoInfo.videoId}
+                  hash={vimeoInfo.hash}
                   title={currentLesson.title}
                   className="w-full h-full"
                 />

@@ -340,9 +340,9 @@ export function CourseEditClient({ course, mentors }: Props) {
   const handleSaveLesson = async () => {
     if (!editingLesson) return;
 
-    // Validate YouTube URL if provided
-    if (lessonFormData.videoUrl && !isValidYouTubeUrl(lessonFormData.videoUrl)) {
-      toast.error("La URL debe ser de YouTube (youtube.com o youtu.be)");
+    // Validate video URL if provided
+    if (lessonFormData.videoUrl && !isValidVideoUrl(lessonFormData.videoUrl)) {
+      toast.error("La URL debe ser de YouTube o Vimeo");
       return;
     }
 
@@ -381,11 +381,12 @@ export function CourseEditClient({ course, mentors }: Props) {
     }
   };
 
-  // Validate YouTube URL
-  const isValidYouTubeUrl = (url: string): boolean => {
+  // Validate YouTube or Vimeo URL
+  const isValidVideoUrl = (url: string): boolean => {
     if (!url) return true; // Empty is allowed
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w-]+/;
-    return youtubeRegex.test(url);
+    const vimeoRegex = /vimeo\.com|player\.vimeo\.com/;
+    return youtubeRegex.test(url) || vimeoRegex.test(url);
   };
 
   // Create module
@@ -431,8 +432,8 @@ export function CourseEditClient({ course, mentors }: Props) {
       return;
     }
 
-    if (newLessonFormData.videoUrl && !isValidYouTubeUrl(newLessonFormData.videoUrl)) {
-      setVideoUrlError("La URL debe ser de YouTube (youtube.com o youtu.be)");
+    if (newLessonFormData.videoUrl && !isValidVideoUrl(newLessonFormData.videoUrl)) {
+      setVideoUrlError("La URL debe ser de YouTube o Vimeo");
       return;
     }
 
@@ -1229,7 +1230,7 @@ export function CourseEditClient({ course, mentors }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label>URL del Video (YouTube)</Label>
+              <Label>URL del Video (YouTube o Vimeo)</Label>
               <Input
                 value={lessonFormData.videoUrl}
                 onChange={(e) =>
@@ -1238,10 +1239,10 @@ export function CourseEditClient({ course, mentors }: Props) {
                     videoUrl: e.target.value,
                   })
                 }
-                placeholder="https://youtube.com/watch?v=... o https://youtu.be/..."
+                placeholder="YouTube URL o Vimeo embed URL"
               />
               <p className="text-xs text-muted-foreground">
-                Solo URLs de YouTube (youtube.com o youtu.be)
+                YouTube (youtube.com, youtu.be) o Vimeo (vimeo.com, player.vimeo.com)
               </p>
             </div>
             <div className="space-y-2">
@@ -1600,14 +1601,14 @@ export function CourseEditClient({ course, mentors }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label>URL del Video (YouTube)</Label>
+              <Label>URL del Video (YouTube o Vimeo)</Label>
               <Input
                 value={newLessonFormData.videoUrl}
                 onChange={(e) => {
                   setNewLessonFormData({ ...newLessonFormData, videoUrl: e.target.value });
                   setVideoUrlError("");
                 }}
-                placeholder="https://youtube.com/watch?v=... o https://youtu.be/..."
+                placeholder="YouTube URL o Vimeo embed URL"
                 className={videoUrlError ? "border-red-500" : ""}
               />
               {videoUrlError ? (
@@ -1617,7 +1618,7 @@ export function CourseEditClient({ course, mentors }: Props) {
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Solo URLs de YouTube (youtube.com o youtu.be)
+                  YouTube (youtube.com, youtu.be) o Vimeo (vimeo.com, player.vimeo.com)
                 </p>
               )}
             </div>
