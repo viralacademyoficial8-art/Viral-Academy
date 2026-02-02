@@ -25,12 +25,14 @@ import { cn } from "@/lib/utils";
 
 const roleLabels: Record<string, string> = {
   ADMIN: "Administrador",
+  VIP: "Acceso VIP",
   MENTOR: "Mentor",
   STUDENT: "Estudiante",
 };
 
 const roleBadgeColors: Record<string, string> = {
   ADMIN: "bg-red-500/20 text-red-400",
+  VIP: "bg-amber-500/20 text-amber-400",
   MENTOR: "bg-blue-500/20 text-blue-400",
   STUDENT: "bg-primary/20 text-primary",
 };

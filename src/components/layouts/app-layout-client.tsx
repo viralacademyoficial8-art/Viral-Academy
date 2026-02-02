@@ -123,7 +123,8 @@ export function AppLayoutClient({ children, user }: AppLayoutClientProps) {
         <TopbarApp onMenuClick={() => setMobileMenuOpen(true)} user={user || undefined} />
         <main className="p-4 md:p-6 lg:p-8">
           {/* Check if route is protected and user doesn't have active subscription */}
-          {isProtectedRoute(pathname) && !hasActiveSubscription(user?.subscriptionStatus) && user?.role !== "ADMIN" ? (
+          {/* VIP and ADMIN roles bypass subscription check */}
+          {isProtectedRoute(pathname) && !hasActiveSubscription(user?.subscriptionStatus) && user?.role !== "ADMIN" && user?.role !== "VIP" ? (
             <SubscriptionGate {...getGateMessage(pathname)} />
           ) : (
             children

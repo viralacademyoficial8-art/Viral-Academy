@@ -100,12 +100,14 @@ export default async function PerfilPage() {
                 </h2>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
-              <Badge variant={isActive ? "default" : "secondary"}>
+              <Badge variant={isActive || user.role === "VIP" ? "default" : "secondary"}>
                 {user.role === "ADMIN"
                   ? "Administrador"
-                  : isActive
-                    ? "Membresía Activa"
-                    : "Sin membresía"}
+                  : user.role === "VIP"
+                    ? "Acceso VIP"
+                    : isActive
+                      ? "Membresía Activa"
+                      : "Sin membresía"}
               </Badge>
               {user.profile?.bio && (
                 <p className="text-sm text-muted-foreground">{user.profile.bio}</p>
