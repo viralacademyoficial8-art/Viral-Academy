@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -60,15 +61,16 @@ function Sidebar({ className }: { className?: string }) {
 
   return (
     <div className={cn("flex flex-col h-full bg-card border-r", className)}>
-      <div className="p-6 border-b">
-        <Link href="/admin" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
-            VA
-          </div>
-          <div>
-            <span className="font-semibold">Viral Academy</span>
-            <span className="block text-xs text-muted-foreground">Admin</span>
-          </div>
+      <div className="p-4 border-b">
+        <Link href="/admin" className="flex items-center gap-3">
+          <Image
+            src="/images/logo-dark.png"
+            alt="Viral Academy"
+            width={160}
+            height={44}
+            className="h-10 w-auto"
+          />
+          <span className="text-xs text-muted-foreground bg-red-500/20 text-red-400 px-2 py-0.5 rounded">Admin</span>
         </Link>
       </div>
 
