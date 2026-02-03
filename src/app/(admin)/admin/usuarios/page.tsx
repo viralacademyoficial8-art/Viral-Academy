@@ -56,18 +56,19 @@ async function getUsers() {
 
 async function getStats() {
   try {
-    const [total, admins, mentors, students, withSubscription] = await Promise.all([
+    const [total, admins, mentors, vips, students, withSubscription] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { role: "ADMIN" } }),
       prisma.user.count({ where: { role: "MENTOR" } }),
+      prisma.user.count({ where: { role: "VIP" } }),
       prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.subscription.count({ where: { status: "ACTIVE" } }),
     ]);
 
-    return { total, admins, mentors, students, withSubscription };
+    return { total, admins, mentors, vips, students, withSubscription };
   } catch (error) {
     console.error("Error fetching stats:", error);
-    return { total: 0, admins: 0, mentors: 0, students: 0, withSubscription: 0 };
+    return { total: 0, admins: 0, mentors: 0, vips: 0, students: 0, withSubscription: 0 };
   }
 }
 

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown, Loader2, Calendar, BookOpen, Award, Trash2, AlertTriangle } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Mail, UserCog, Shield, ShieldOff, Users, GraduationCap, Crown, Loader2, Calendar, BookOpen, Award, Trash2, AlertTriangle, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,7 @@ interface Stats {
   total: number;
   admins: number;
   mentors: number;
+  vips: number;
   students: number;
   withSubscription: number;
 }
@@ -265,7 +266,7 @@ export function UsersClient({ users, stats }: UsersClientProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-6">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Usuarios</CardDescription>
@@ -287,6 +288,15 @@ export function UsersClient({ users, stats }: UsersClientProps) {
             <CardTitle className="text-2xl flex items-center gap-2">
               <GraduationCap className="h-5 w-5 text-blue-500" />
               {stats.students}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>VIP</CardDescription>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Star className="h-5 w-5 text-amber-500" />
+              {stats.vips}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -338,6 +348,9 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setRoleFilter("STUDENT")}>
                     Estudiantes
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setRoleFilter("VIP")}>
+                    VIP
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setRoleFilter("MENTOR")}>
                     Mentores
