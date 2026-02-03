@@ -87,9 +87,9 @@ export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = fa
                 <Image
                   src={mounted && theme === "dark" ? "/images/logo-dark.png" : "/images/logo.png"}
                   alt="Viral Academy"
-                  width={140}
-                  height={36}
-                  className="h-8 w-auto"
+                  width={160}
+                  height={44}
+                  className="h-10 w-auto"
                 />
               </motion.div>
             )}
