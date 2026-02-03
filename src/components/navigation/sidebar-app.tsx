@@ -12,6 +12,7 @@ import {
   LogOut,
   Shield,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -36,6 +37,12 @@ interface SidebarAppProps {
 export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = false }: SidebarAppProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
+  const { theme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const displayName = user?.name || user?.email?.split("@")[0] || "Usuario";
   const initials = displayName
@@ -78,7 +85,7 @@ export function SidebarApp({ navigation = studentSidebarNav, user, isMobile = fa
                 animate={{ opacity: 1 }}
               >
                 <Image
-                  src="/images/logo-dark.png"
+                  src={mounted && theme === "dark" ? "/images/logo-dark.png" : "/images/logo.png"}
                   alt="Viral Academy"
                   width={140}
                   height={36}
