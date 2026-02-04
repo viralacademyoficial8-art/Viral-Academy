@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { CookieBanner } from "@/components/cookies/cookie-banner";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({
           >
             {children}
             <Toaster position="top-right" />
+            <CookieBanner />
           </ThemeProvider>
         </SessionProvider>
       </body>
