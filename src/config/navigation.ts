@@ -66,6 +66,7 @@ export const footerLinks = {
   legal: [
     { title: "Términos y Condiciones", href: "/legal/terminos" },
     { title: "Política de Privacidad", href: "/legal/privacidad" },
+    { title: "Política de Cookies", href: "/cookies" },
   ],
 };
 
