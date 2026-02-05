@@ -188,6 +188,7 @@ export default function RegisterPage() {
         </Button>
       </form>
 
+      {/* TODO: Habilitar Google Sign-In en el futuro
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <Separator />
@@ -229,6 +230,7 @@ export default function RegisterPage() {
         )}
         Registrarse con Google
       </Button>
+      */}
 
       <p className="text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{" "}
