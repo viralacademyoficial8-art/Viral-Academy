@@ -8,10 +8,11 @@ export const siteConfig = {
     instagram: "https://instagram.com/viralacademy",
     youtube: "https://youtube.com/@viralacademy",
     tiktok: "https://tiktok.com/@viralacademy",
+    facebook: "https://facebook.com/viralacademy",
   },
   creator: {
-    name: "Leonardo Gómez Ortiz",
-    role: "Founder & Lead Mentor",
+    name: "Leonardo Ortiz",
+    role: "Fundador / Experto en áreas digitales",
   },
   pricing: {
     monthly: {
@@ -36,9 +37,10 @@ export const siteConfig = {
     {
       id: "leo",
       name: "Leonardo Gómez Ortiz",
-      role: "Founder & Lead Mentor",
-      specialties: ["Meta Ads", "Viralidad", "Funnels", "IA aplicada", "Academias", "Escalamiento"],
-      bio: "Estratega digital y mentor de viralidad, marketing e inteligencia artificial aplicada a negocios. Ha alcanzado a más de 100 millones de personas con campañas y contenidos, gestionado más de 100,000 USD en pauta y formado a miles de alumnos en marketing, contenido y sistemas digitales escalables.",
+      role: "Fundador / Experto en áreas digitales",
+      specialties: ["Viralidad en redes sociales", "Marketing Digital", "Inteligencia artificial", "Desarrollo de software", "Incubación de negocios"],
+      bioShort: "Estratega digital, emprendedor y speaker en marketing, viralidad y negocios digitales.",
+      bio: "Leonardo Gómez Ortiz es estratega digital, emprendedor y speaker en marketing, viralidad y negocios digitales. Ha sido speaker y capacitador en escenarios como Google Cloud, UTEL Universidad, Startup México, Talent Land y eventos de emprendimiento y bienestar como People & Wellness en el Tec de Monterrey, compartiendo estrategia real sobre contenido, ventas, automatización e inteligencia artificial aplicada a negocios. Es socio y fundador de proyectos como Viral Academy y Comprando Estamos, además de plataformas tecnológicas enfocadas en educación digital, comercio e innovación. En el escenario no motiva por motivar: enseña cómo crecer, monetizar y escalar en el mundo digital actual.",
       image: "/images/mentors/leo.jpg",
       liveDay: "Miércoles",
       liveType: "MARKETING",
@@ -46,10 +48,11 @@ export const siteConfig = {
     {
       id: "susy",
       name: "Susy Ponce",
-      role: "Co-Mentora · Voz, Mentalidad y Poder Personal",
-      specialties: ["Voz", "Comunicación", "Liderazgo", "Poder Personal", "PNL", "Neurocomunicación"],
-      bio: "Master Speaker internacional y mentora en comunicación consciente, liderazgo y mentalidad. Especialista en PNL, neurocomunicación y desarrollo del poder personal para emprendedores y creadores.",
-      image: "/images/mentors/susy.jpg",
+      role: "Cofundadora / Coach transformacional",
+      specialties: ["PNL", "Neurociencia", "Marca Personal", "Imagen pública", "Comunicación", "Liderazgo"],
+      bioShort: "Psicopedagoga y coach transformacional con más de 22 años de experiencia acompañando a personas y líderes.",
+      bio: "Psicopedagoga y coach transformacional con más de 22 años de experiencia acompañando a personas y líderes en procesos profundos de sanación emocional, reprogramación de creencias y construcción de una identidad auténtica. Especialista en PNL, comunicación consciente, liderazgo y poder personal, Susy trabaja desde la raíz: mente, voz interna e identidad. Su enfoque integra desarrollo humano, mentalidad y propósito, ayudando a las personas a liberarse de bloqueos, fortalecer su seguridad personal y liderar con coherencia y autenticidad.",
+      image: "/images/mentors/susy.png",
       liveDay: "Lunes",
       liveType: "MINDSET",
     },
