@@ -21,7 +21,20 @@ const categoryLabels: Record<string, string> = {
   ECOMMERCE: "E-commerce",
   MINDSET: "Mentalidad",
   BUSINESS: "Negocios",
+  SOCIAL_VIRAL: "Viralidad Social",
 };
+
+// Helper to get category label, avoiding showing database IDs
+function getCategoryLabel(category: string): string {
+  if (categoryLabels[category]) {
+    return categoryLabels[category];
+  }
+  // If it looks like a database ID (contains only lowercase letters and numbers, long)
+  if (/^[a-z0-9]{15,}$/.test(category)) {
+    return "Curso";
+  }
+  return category;
+}
 
 const levelLabels: Record<string, string> = {
   BEGINNER: "Principiante",
@@ -106,13 +119,13 @@ export default async function CursosPublicPage() {
                     className="group relative flex flex-col overflow-hidden rounded-2xl bg-background border border-border hover:border-primary/50 transition-all duration-300"
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
+                    <div className="aspect-video bg-gradient-to-br from-surface-2 to-surface-1 relative overflow-hidden">
                       {course.thumbnail && (course.thumbnail.startsWith('/') || course.thumbnail.startsWith('http')) ? (
                         <Image
                           src={course.thumbnail}
                           alt={course.title}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           unoptimized={course.thumbnail.startsWith('http')}
                         />
@@ -127,7 +140,7 @@ export default async function CursosPublicPage() {
                         </div>
                       )}
                       <div className="absolute bottom-4 right-4 px-3 py-1 rounded-full bg-background/90 backdrop-blur-sm text-xs font-medium z-10">
-                        {categoryLabels[course.category] || course.category}
+                        {getCategoryLabel(course.category)}
                       </div>
                     </div>
 
