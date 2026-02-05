@@ -1,9 +1,10 @@
 import { PublicLayout } from "@/components/layouts/public-layout";
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/config/site";
-import { Calendar, Clock, Video, Users, ArrowRight, CalendarDays } from "lucide-react";
+import { Calendar, Clock, Video, Users, ArrowRight, CalendarDays, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -100,7 +101,10 @@ export default async function EventosPage() {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-6">
-              {siteConfig.mentors.map((mentor) => (
+              {siteConfig.mentors
+                .slice()
+                .sort((a, b) => (a.liveDay === "Lunes" ? -1 : 1))
+                .map((mentor) => (
                 <div
                   key={mentor.id}
                   className="p-6 rounded-xl bg-background border border-border hover:border-primary/50 transition-colors"
@@ -111,7 +115,9 @@ export default async function EventosPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-lg">{mentor.liveDay}</h3>
+                        <h3 className="font-bold text-lg">
+                          {mentor.liveDay === "Lunes" ? "Lunes Sublimes" : "Miércoles Virales"}
+                        </h3>
                         <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
                           {mentor.liveType}
                         </span>
@@ -230,17 +236,32 @@ export default async function EventosPage() {
                   `${event.mentor.profile?.firstName || ""} ${event.mentor.profile?.lastName || ""}`.trim() ||
                   event.mentor.email;
 
+                // Determine mentor image based on event type
+                const mentorImage = event.type === "MINDSET"
+                  ? "/images/mentors/susy.png"
+                  : "/images/mentors/leo.jpg";
+
                 return (
                   <div
                     key={event.id}
-                    className="overflow-hidden rounded-xl bg-background border border-border opacity-75"
+                    className="group overflow-hidden rounded-xl bg-background border border-border hover:border-primary/30 transition-all"
                   >
-                    {/* Thumbnail */}
-                    <div className="aspect-video bg-gradient-to-br from-surface-2 to-surface-1 relative">
+                    {/* Thumbnail with mentor image background */}
+                    <div className="aspect-video relative overflow-hidden">
+                      <Image
+                        src={mentorImage}
+                        alt={mentorName}
+                        fill
+                        className="object-cover object-top opacity-60 group-hover:opacity-80 transition-opacity"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <Video className="w-10 h-10 text-muted-foreground" />
+                        <div className="w-14 h-14 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                          <PlayCircle className="w-8 h-8 text-primary" />
+                        </div>
                       </div>
-                      <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-surface-2 text-muted-foreground text-xs font-medium">
+                      <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-background/80 backdrop-blur-sm text-xs font-medium border border-border">
                         Replay disponible
                       </div>
                     </div>
@@ -254,7 +275,7 @@ export default async function EventosPage() {
                         </span>
                       </div>
 
-                      <h3 className="font-bold mb-2">{event.title}</h3>
+                      <h3 className="font-bold mb-2 group-hover:text-primary transition-colors">{event.title}</h3>
 
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">{mentorName}</span>
