@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -71,13 +72,23 @@ export function MentorsSection({ mentors }: MentorsSectionProps) {
                 viewport={{ once: true }}
               >
                 <Card hover className="h-full overflow-hidden">
-                  {/* Image placeholder */}
-                  <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-32 h-32 rounded-full bg-surface-2 flex items-center justify-center text-4xl font-bold text-muted-foreground">
-                        {mentor.name.split(" ").map(n => n[0]).join("")}
+                  {/* Mentor Photo */}
+                  <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
+                    {mentor.image ? (
+                      <Image
+                        src={mentor.image}
+                        alt={mentor.name}
+                        fill
+                        className="object-cover object-top"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-32 h-32 rounded-full bg-surface-2 flex items-center justify-center text-4xl font-bold text-muted-foreground">
+                          {mentor.name.split(" ").map(n => n[0]).join("")}
+                        </div>
                       </div>
-                    </div>
+                    )}
                     {/* Live day badge */}
                     {mentor.liveDay && (
                       <div className="absolute top-4 right-4">
