@@ -39,7 +39,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { updateBlogPost, deleteBlogPost, generateSlug, BLOG_CATEGORIES } from "@/lib/actions/blog";
+import { updateBlogPost, deleteBlogPost } from "@/lib/actions/blog";
+import { generateSlug, BLOG_CATEGORIES } from "@/lib/blog-utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 

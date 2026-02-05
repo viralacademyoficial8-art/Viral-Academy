@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PublicLayout } from "@/components/layouts/public-layout";
-import { getPublishedBlogPosts, BLOG_CATEGORIES } from "@/lib/actions/blog";
+import { getPublishedBlogPosts } from "@/lib/actions/blog";
+import { BLOG_CATEGORIES } from "@/lib/blog-utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 

@@ -6,7 +6,8 @@ import { ArrowLeft, Calendar, Clock, User, Tag, Share2, ArrowRight } from "lucid
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PublicLayout } from "@/components/layouts/public-layout";
-import { getBlogPostBySlug, getPublishedBlogPosts, BLOG_CATEGORIES } from "@/lib/actions/blog";
+import { getBlogPostBySlug, getPublishedBlogPosts } from "@/lib/actions/blog";
+import { BLOG_CATEGORIES } from "@/lib/blog-utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 

@@ -52,7 +52,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { deleteBlogPost, toggleBlogPostPublished, toggleBlogPostFeatured, BLOG_CATEGORIES } from "@/lib/actions/blog";
+import { deleteBlogPost, toggleBlogPostPublished, toggleBlogPostFeatured } from "@/lib/actions/blog";
+import { BLOG_CATEGORIES } from "@/lib/blog-utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";

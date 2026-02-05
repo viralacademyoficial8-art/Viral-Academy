@@ -28,7 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createBlogPost, generateSlug, BLOG_CATEGORIES } from "@/lib/actions/blog";
+import { createBlogPost } from "@/lib/actions/blog";
+import { generateSlug, BLOG_CATEGORIES } from "@/lib/blog-utils";
 
 export function NewPostClient() {
   const router = useRouter();
