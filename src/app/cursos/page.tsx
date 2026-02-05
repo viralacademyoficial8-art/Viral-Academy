@@ -119,7 +119,7 @@ export default async function CursosPublicPage() {
                     className="group relative flex flex-col overflow-hidden rounded-2xl bg-background border border-border hover:border-primary/50 transition-all duration-300"
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-surface-2 relative overflow-hidden">
+                    <div className="aspect-[4/3] bg-surface-2 relative overflow-hidden">
                       {course.thumbnail && (course.thumbnail.startsWith('/') || course.thumbnail.startsWith('http')) ? (
                         <Image
                           src={course.thumbnail}
