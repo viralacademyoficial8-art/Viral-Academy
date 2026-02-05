@@ -4,17 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { parse } from "csv-parse/sync";
 
 export const dynamic = "force-dynamic";
-
-// Increase body size limit to 50MB for large CSV files
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-};
-
-// For App Router, we need this
 export const maxDuration = 60; // 60 seconds timeout
 
 interface TutorLMSRow {
