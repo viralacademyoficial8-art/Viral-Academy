@@ -133,6 +133,7 @@ export default function LoginPage() {
         </Button>
       </form>
 
+      {/* TODO: Habilitar Google Sign-In en el futuro
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <Separator />
@@ -174,6 +175,7 @@ export default function LoginPage() {
         )}
         Continuar con Google
       </Button>
+      */}
 
       <p className="text-center text-sm text-muted-foreground">
         ¿No tienes cuenta?{" "}
