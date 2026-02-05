@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { GraduationCap, Clock, BarChart, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 export const dynamic = 'force-dynamic';
 
@@ -105,13 +106,22 @@ export default async function CursosPublicPage() {
                     className="group relative flex flex-col overflow-hidden rounded-2xl bg-background border border-border hover:border-primary/50 transition-all duration-300"
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative">
+                    <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
+                      {course.thumbnail && (
+                        <Image
+                          src={course.thumbnail}
+                          alt={course.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      )}
                       {course.featured && (
-                        <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                        <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium z-10">
                           Destacado
                         </div>
                       )}
-                      <div className="absolute bottom-4 right-4 px-3 py-1 rounded-full bg-background/90 backdrop-blur-sm text-xs font-medium">
+                      <div className="absolute bottom-4 right-4 px-3 py-1 rounded-full bg-background/90 backdrop-blur-sm text-xs font-medium z-10">
                         {categoryLabels[course.category] || course.category}
                       </div>
                     </div>

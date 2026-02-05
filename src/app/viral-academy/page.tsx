@@ -3,6 +3,7 @@ import { siteConfig } from "@/config/site";
 import { Zap, Target, Lightbulb, Users, Award, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { PartnerLogo } from "@/components/icons/partner-logos";
 
 export const metadata = {
   title: "Sobre Nosotros | Viral Academy",
@@ -186,14 +187,9 @@ export default function ViralAcademyPage() {
               Hemos trabajado con equipos de las mejores empresas y universidades.
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-8 lg:gap-12">
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
             {siteConfig.partners.map((partner) => (
-              <span
-                key={partner}
-                className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {partner}
-              </span>
+              <PartnerLogo key={partner} name={partner} />
             ))}
           </div>
         </div>
