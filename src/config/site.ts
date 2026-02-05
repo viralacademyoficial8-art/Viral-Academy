@@ -10,8 +10,8 @@ export const siteConfig = {
     tiktok: "https://tiktok.com/@viralacademy",
   },
   creator: {
-    name: "Leonardo Gómez Ortiz",
-    role: "Founder & Lead Mentor",
+    name: "Leonardo Ortiz",
+    role: "Fundador / Experto en áreas digitales",
   },
   pricing: {
     monthly: {
@@ -35,10 +35,10 @@ export const siteConfig = {
   mentors: [
     {
       id: "leo",
-      name: "Leonardo Gómez Ortiz",
-      role: "Founder & Lead Mentor",
+      name: "Leonardo Ortiz",
+      role: "Fundador / Experto en áreas digitales",
       specialties: ["Meta Ads", "Viralidad", "Funnels", "IA aplicada", "Academias", "Escalamiento"],
-      bio: "Estratega digital y mentor de viralidad, marketing e inteligencia artificial aplicada a negocios. Ha alcanzado a más de 100 millones de personas con campañas y contenidos, gestionado más de 100,000 USD en pauta y formado a miles de alumnos en marketing, contenido y sistemas digitales escalables.",
+      bio: "Leonardo es un mentor hispano en marketing digital y viralidad. Con más de 10 años de experiencia y 100M+ vistas en YouTube, que ha guiado a miles de emprendedores a monetizar su mensaje, escalar negocios digitales y liderar con autenticidad.",
       image: "/images/mentors/leo.jpg",
       liveDay: "Miércoles",
       liveType: "MARKETING",
@@ -46,9 +46,9 @@ export const siteConfig = {
     {
       id: "susy",
       name: "Susy Ponce",
-      role: "Co-Mentora · Voz, Mentalidad y Poder Personal",
+      role: "Cofundadora / Coach transformacional",
       specialties: ["Voz", "Comunicación", "Liderazgo", "Poder Personal", "PNL", "Neurocomunicación"],
-      bio: "Master Speaker internacional y mentora en comunicación consciente, liderazgo y mentalidad. Especialista en PNL, neurocomunicación y desarrollo del poder personal para emprendedores y creadores.",
+      bio: "Susy Ponce es psicopedagoga, coach transformacional con más de 22 años de experiencia, experta en ayudar a personas y líderes a sanar bloqueos, reprogramar creencias y construir una identidad auténtica que les permita brillar con propósito.",
       image: "/images/mentors/susy.jpg",
       liveDay: "Lunes",
       liveType: "MINDSET",
