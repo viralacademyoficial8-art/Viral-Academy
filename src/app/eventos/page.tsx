@@ -229,12 +229,12 @@ export default async function EventosPage() {
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-6 max-w-5xl mx-auto">
               {pastEvents.map((event) => {
-                const mentorName =
-                  event.mentor.profile?.displayName ||
-                  `${event.mentor.profile?.firstName || ""} ${event.mentor.profile?.lastName || ""}`.trim() ||
-                  event.mentor.email;
+                // Use full mentor names based on event type
+                const mentorName = event.type === "MINDSET"
+                  ? "Susy Ponce"
+                  : "Leonardo Gómez Ortiz";
 
                 // Determine mentor image based on event type
                 const mentorImage = event.type === "MINDSET"
@@ -242,9 +242,10 @@ export default async function EventosPage() {
                   : "/images/mentors/leo.jpg";
 
                 return (
-                  <div
+                  <Link
                     key={event.id}
-                    className="group overflow-hidden rounded-xl bg-background border border-border hover:border-primary/30 transition-all"
+                    href="/membresia"
+                    className="group overflow-hidden rounded-xl bg-background border border-border hover:border-primary/30 transition-all w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] cursor-pointer"
                   >
                     {/* Thumbnail with mentor image background */}
                     <div className="aspect-video relative overflow-hidden">
@@ -281,7 +282,7 @@ export default async function EventosPage() {
                         <span className="text-sm text-muted-foreground">{mentorName}</span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
