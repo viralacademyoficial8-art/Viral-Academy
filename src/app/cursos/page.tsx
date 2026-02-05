@@ -107,14 +107,19 @@ export default async function CursosPublicPage() {
                   >
                     {/* Thumbnail */}
                     <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
-                      {course.thumbnail && (
+                      {course.thumbnail && (course.thumbnail.startsWith('/') || course.thumbnail.startsWith('http')) ? (
                         <Image
                           src={course.thumbnail}
                           alt={course.title}
                           fill
                           className="object-cover"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          unoptimized={course.thumbnail.startsWith('http')}
                         />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <GraduationCap className="w-16 h-16 text-primary/30" />
+                        </div>
                       )}
                       {course.featured && (
                         <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium z-10">
