@@ -23,6 +23,7 @@ import {
   Images,
   Sun,
   Moon,
+  Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ const navigation = [
   { name: "Categorías", href: "/admin/categorias", icon: Tags },
   { name: "Cursos", href: "/admin/cursos", icon: GraduationCap },
   { name: "Lives", href: "/admin/lives", icon: Video },
+  { name: "Blog", href: "/admin/blog", icon: Newspaper },
   { name: "Suscripciones", href: "/admin/suscripciones", icon: CreditCard },
   { name: "Recursos", href: "/admin/recursos", icon: FileText },
   { name: "Galería", href: "/admin/galeria", icon: Images },
