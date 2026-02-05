@@ -35,17 +35,6 @@ export const siteConfig = {
   },
   mentors: [
     {
-      id: "leo",
-      name: "Leonardo Gómez Ortiz",
-      role: "Fundador / Experto en áreas digitales",
-      specialties: ["Viralidad en redes sociales", "Marketing Digital", "Inteligencia artificial", "Desarrollo de software", "Incubación de negocios"],
-      bioShort: "Estratega digital, emprendedor y speaker en marketing, viralidad y negocios digitales.",
-      bio: "Leonardo Gómez Ortiz es estratega digital, emprendedor y speaker en marketing, viralidad y negocios digitales. Ha sido speaker y capacitador en escenarios como Google Cloud, UTEL Universidad, Startup México, Talent Land y eventos de emprendimiento y bienestar como People & Wellness en el Tec de Monterrey, compartiendo estrategia real sobre contenido, ventas, automatización e inteligencia artificial aplicada a negocios. Es socio y fundador de proyectos como Viral Academy y Comprando Estamos, además de plataformas tecnológicas enfocadas en educación digital, comercio e innovación. En el escenario no motiva por motivar: enseña cómo crecer, monetizar y escalar en el mundo digital actual.",
-      image: "/images/mentors/leo.jpg",
-      liveDay: "Miércoles",
-      liveType: "MARKETING",
-    },
-    {
       id: "susy",
       name: "Susy Ponce",
       role: "Cofundadora / Coach transformacional",
@@ -55,6 +44,17 @@ export const siteConfig = {
       image: "/images/mentors/susy.png",
       liveDay: "Lunes",
       liveType: "MINDSET",
+    },
+    {
+      id: "leo",
+      name: "Leonardo Gómez Ortiz",
+      role: "Fundador / Experto en áreas digitales",
+      specialties: ["Viralidad en redes sociales", "Marketing Digital", "Inteligencia artificial", "Desarrollo de software", "Incubación de negocios"],
+      bioShort: "Estratega digital, emprendedor y speaker en marketing, viralidad y negocios digitales.",
+      bio: "Leonardo Gómez Ortiz es estratega digital, emprendedor y speaker en marketing, viralidad y negocios digitales. Ha sido speaker y capacitador en escenarios como Google Cloud, UTEL Universidad, Startup México, Talent Land y eventos de emprendimiento y bienestar como People & Wellness en el Tec de Monterrey, compartiendo estrategia real sobre contenido, ventas, automatización e inteligencia artificial aplicada a negocios. Es socio y fundador de proyectos como Viral Academy y Comprando Estamos, además de plataformas tecnológicas enfocadas en educación digital, comercio e innovación. En el escenario no motiva por motivar: enseña cómo crecer, monetizar y escalar en el mundo digital actual.",
+      image: "/images/mentors/leo.jpg",
+      liveDay: "Miércoles",
+      liveType: "MARKETING",
     },
   ],
   features: [
