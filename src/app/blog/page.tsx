@@ -1,97 +1,38 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Calendar, Clock, User } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Calendar, Clock, User, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PublicLayout } from "@/components/layouts/public-layout";
+import { getPublishedBlogPosts, BLOG_CATEGORIES } from "@/lib/actions/blog";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: "Blog | Viral Academy",
   description: "Artículos, tutoriales y recursos sobre marketing digital, inteligencia artificial y negocios digitales.",
 };
 
-const blogPosts = [
-  {
-    id: 1,
-    title: "Cómo crear contenido viral en 2024",
-    description: "Descubre las estrategias y técnicas que utilizan los creadores más exitosos para generar contenido que se comparte masivamente.",
-    category: "Marketing Digital",
-    author: "Leonardo Gómez",
-    date: "2024-01-15",
-    readTime: "8 min",
-    image: null,
-  },
-  {
-    id: 2,
-    title: "Inteligencia Artificial para emprendedores",
-    description: "Herramientas de IA que puedes implementar hoy en tu negocio para automatizar procesos y aumentar tu productividad.",
-    category: "IA",
-    author: "Leonardo Gómez",
-    date: "2024-01-10",
-    readTime: "12 min",
-    image: null,
-  },
-  {
-    id: 3,
-    title: "El poder de la mentalidad en los negocios",
-    description: "Cómo tu forma de pensar impacta directamente en el éxito de tu emprendimiento y qué puedes hacer para mejorarla.",
-    category: "Mentalidad",
-    author: "Susy Ponce",
-    date: "2024-01-05",
-    readTime: "6 min",
-    image: null,
-  },
-  {
-    id: 4,
-    title: "Guía completa de Meta Ads",
-    description: "Todo lo que necesitas saber para crear campañas publicitarias efectivas en Facebook e Instagram.",
-    category: "Marketing Digital",
-    author: "Leonardo Gómez",
-    date: "2024-01-01",
-    readTime: "15 min",
-    image: null,
-  },
-  {
-    id: 5,
-    title: "Construye tu marca personal desde cero",
-    description: "Pasos prácticos para desarrollar una marca personal auténtica que te diferencie en el mercado digital.",
-    category: "Marca Personal",
-    author: "Susy Ponce",
-    date: "2023-12-28",
-    readTime: "10 min",
-    image: null,
-  },
-  {
-    id: 6,
-    title: "Automatización de negocios digitales",
-    description: "Aprende a crear sistemas automatizados que trabajen por ti las 24 horas del día.",
-    category: "Automatización",
-    author: "Leonardo Gómez",
-    date: "2023-12-20",
-    readTime: "9 min",
-    image: null,
-  },
-];
+export default async function BlogPage() {
+  const posts = await getPublishedBlogPosts();
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("es-MX", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-export default function BlogPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <PublicLayout>
       {/* Header */}
-      <section className="section-padding bg-gradient-to-b from-primary/5 to-background">
+      <section className="pt-32 pb-16 md:pt-40 md:pb-24 bg-gradient-to-b from-primary/5 to-background">
         <div className="container-wide text-center">
-          <Badge variant="outline" className="mb-4">Blog</Badge>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Recursos y artículos
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+            <Newspaper className="w-4 h-4" />
+            Blog
+          </div>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+            Recursos y <span className="text-primary">artículos</span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Aprende estrategias de marketing digital, inteligencia artificial, mentalidad
             y negocios digitales con contenido práctico y actualizado.
           </p>
@@ -99,69 +40,129 @@ export default function BlogPage() {
       </section>
 
       {/* Blog Posts */}
-      <section className="section-padding">
+      <section className="py-16 md:py-24 bg-surface-1/50 border-y border-border">
         <div className="container-wide">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {blogPosts.map((post) => (
-              <Card key={post.id} hover className="flex flex-col">
-                {/* Image placeholder */}
-                <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 rounded-t-lg" />
+          {posts.length === 0 ? (
+            <div className="text-center py-16">
+              <Newspaper className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Próximamente</h2>
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                Estamos preparando contenido increíble para ti. ¡Únete a la comunidad para ser el primero en acceder!
+              </p>
+              <Button asChild>
+                <Link href="/auth/registro">Únete ahora</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {posts.map((post) => {
+                const authorName = post.author.profile?.displayName || post.author.email;
+                const categoryLabel = BLOG_CATEGORIES[post.category as keyof typeof BLOG_CATEGORIES] || post.category;
 
-                <CardHeader className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {post.category}
-                    </Badge>
-                  </div>
-                  <CardTitle className="line-clamp-2">{post.title}</CardTitle>
-                  <CardDescription className="line-clamp-3">
-                    {post.description}
-                  </CardDescription>
-                </CardHeader>
+                return (
+                  <Link
+                    key={post.id}
+                    href={`/blog/${post.slug}`}
+                    className="group"
+                  >
+                    <Card className="flex flex-col h-full overflow-hidden hover:border-primary/50 transition-colors">
+                      {/* Image */}
+                      <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
+                        {post.thumbnail ? (
+                          <Image
+                            src={post.thumbnail}
+                            alt={post.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            unoptimized={post.thumbnail.startsWith('http')}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Newspaper className="w-12 h-12 text-primary/30" />
+                          </div>
+                        )}
+                        {post.featured && (
+                          <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                            Destacado
+                          </div>
+                        )}
+                      </div>
 
-                <CardContent className="pt-0">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <User className="h-3.5 w-3.5" />
-                      {post.author}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {post.readTime}
-                    </span>
-                  </div>
-                </CardContent>
+                      <CardHeader className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {categoryLabel}
+                          </Badge>
+                        </div>
+                        <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
+                          {post.title}
+                        </CardTitle>
+                        <CardDescription className="line-clamp-3">
+                          {post.excerpt || post.content.substring(0, 150)}...
+                        </CardDescription>
+                      </CardHeader>
 
-                <CardFooter className="pt-0">
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {formatDate(post.date)}
-                    </span>
-                    <Button variant="ghost" size="sm" className="text-primary" disabled>
-                      Leer más <ArrowRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <User className="h-3.5 w-3.5" />
+                            {authorName}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {post.readTime} min
+                          </span>
+                        </div>
+                      </CardContent>
 
-          {/* Coming Soon Notice */}
-          <div className="mt-12 text-center p-8 rounded-2xl bg-surface-1 border border-border">
-            <h3 className="text-xl font-semibold mb-2">Más contenido próximamente</h3>
-            <p className="text-muted-foreground mb-4">
-              Estamos trabajando en nuevos artículos y recursos. Mientras tanto,
-              únete a Viral Academy para acceder a contenido exclusivo.
+                      <CardFooter className="pt-0">
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {post.publishedAt
+                              ? format(new Date(post.publishedAt), "d 'de' MMMM, yyyy", { locale: es })
+                              : format(new Date(post.createdAt), "d 'de' MMMM, yyyy", { locale: es })}
+                          </span>
+                          <span className="text-primary text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+                            Leer más <ArrowRight className="h-4 w-4" />
+                          </span>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 md:py-24">
+        <div className="container-wide">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Accede a contenido exclusivo
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Únete a Viral Academy y accede a cursos, lives, recursos y contenido exclusivo
+              para acelerar tu crecimiento como emprendedor digital.
             </p>
-            <Button asChild>
-              <Link href="/membresia">
-                Ver membresía
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" asChild>
+                <Link href="/auth/registro">
+                  Únete ahora
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/membresia">Ver membresía</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
-    </div>
+    </PublicLayout>
   );
 }

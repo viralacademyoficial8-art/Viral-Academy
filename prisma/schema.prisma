@@ -121,6 +121,9 @@ model User {
   // Media uploads
   mediaUploads   Media[]     @relation("MediaUploads")
 
+  // Blog posts
+  blogPosts      BlogPost[]  @relation("BlogPostAuthor")
+
   @@index([email])
   @@index([role])
   @@index([active])
@@ -699,6 +702,37 @@ model AuditLog {
   @@index([action])
   @@index([entity])
   @@index([createdAt])
+}
+
+// ============================================
+// BLOG
+// ============================================
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String?   @db.Text // Short description for cards
+  content     String    @db.Text // Full content (Markdown)
+  thumbnail   String?   // Cover image URL
+  authorId    String
+  category    String    @default("general") // marketing, ia, mindset, negocios, etc.
+  tags        String[]  // Array of tags
+  published   Boolean   @default(false)
+  featured    Boolean   @default(false)
+  readTime    Int       @default(5) // Reading time in minutes
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author User @relation("BlogPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([published])
+  @@index([category])
+  @@index([featured])
+  @@index([publishedAt])
+  @@index([authorId])
 }
 
 // ============================================
