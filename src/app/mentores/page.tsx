@@ -4,6 +4,7 @@ import { siteConfig } from "@/config/site";
 import { Users, Calendar, Video, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -106,15 +107,25 @@ export default async function MentoresPage() {
                 key={mentor.id}
                 className="group relative overflow-hidden rounded-2xl bg-background border border-border hover:border-primary/50 transition-all duration-300"
               >
-                {/* Image placeholder */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5 relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-5xl font-bold text-primary">
-                        {mentor.name.charAt(0)}
-                      </span>
+                {/* Mentor Photo */}
+                <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
+                  {mentor.image ? (
+                    <Image
+                      src={mentor.image}
+                      alt={mentor.name}
+                      fill
+                      className="object-cover object-top"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-5xl font-bold text-primary">
+                          {mentor.name.charAt(0)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   {/* Live badge */}
                   {mentor.liveDay && (
                     <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm border border-border">
@@ -166,7 +177,10 @@ export default async function MentoresPage() {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-6">
-              {mentors.filter(m => m.liveDay).map((mentor) => (
+              {mentors
+                .filter(m => m.liveDay)
+                .sort((a, b) => (a.liveDay === "Lunes" ? -1 : 1))
+                .map((mentor) => (
                 <div
                   key={mentor.id}
                   className="p-6 rounded-xl bg-surface-1 border border-border"
@@ -176,12 +190,14 @@ export default async function MentoresPage() {
                       <Calendar className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-1">{mentor.liveDay}</h3>
+                      <h3 className="font-semibold mb-1">
+                        {mentor.liveDay === "Lunes" ? "Lunes Sublimes" : "Miércoles Virales"}
+                      </h3>
                       <p className="text-sm text-muted-foreground mb-2">
                         Live de {mentor.liveType === "MINDSET" ? "Mentalidad" : "Marketing"}
                       </p>
                       <p className="text-sm text-primary font-medium">
-                        con {mentor.name.split(" ")[0]}
+                        con {mentor.name}
                       </p>
                     </div>
                   </div>

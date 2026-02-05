@@ -42,12 +42,12 @@ export function FooterPublic() {
                 <Image
                   src={theme === "dark" ? "/images/logo-dark.png" : "/images/logo.png"}
                   alt="Viral Academy"
-                  width={150}
-                  height={40}
-                  className="h-10 w-auto"
+                  width={280}
+                  height={75}
+                  className="h-16 w-auto"
                 />
               ) : (
-                <div className="h-10 w-[150px]" />
+                <div className="h-16 w-[280px]" />
               )}
             </Link>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs">
