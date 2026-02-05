@@ -35,10 +35,11 @@ export const siteConfig = {
   mentors: [
     {
       id: "leo",
-      name: "Leonardo Ortiz",
+      name: "Leonardo Gómez Ortiz",
       role: "Fundador / Experto en áreas digitales",
       specialties: ["Meta Ads", "Viralidad", "Funnels", "IA aplicada", "Academias", "Escalamiento"],
-      bio: "Leonardo es un mentor hispano en marketing digital y viralidad. Con más de 10 años de experiencia y 100M+ vistas en YouTube, que ha guiado a miles de emprendedores a monetizar su mensaje, escalar negocios digitales y liderar con autenticidad.",
+      bioShort: "Estratega digital, emprendedor y speaker en marketing, viralidad y negocios digitales.",
+      bio: "Leonardo Gómez Ortiz es estratega digital, emprendedor y speaker en marketing, viralidad y negocios digitales. Ha sido speaker y capacitador en escenarios como Google Cloud, UTEL Universidad, Startup México, Talent Land y eventos de emprendimiento y bienestar como People & Wellness en el Tec de Monterrey, compartiendo estrategia real sobre contenido, ventas, automatización e inteligencia artificial aplicada a negocios. Es socio y fundador de proyectos como Viral Academy y Comprando Estamos, además de plataformas tecnológicas enfocadas en educación digital, comercio e innovación. En el escenario no motiva por motivar: enseña cómo crecer, monetizar y escalar en el mundo digital actual.",
       image: "/images/mentors/leo.jpg",
       liveDay: "Miércoles",
       liveType: "MARKETING",
@@ -48,7 +49,8 @@ export const siteConfig = {
       name: "Susy Ponce",
       role: "Cofundadora / Coach transformacional",
       specialties: ["Voz", "Comunicación", "Liderazgo", "Poder Personal", "PNL", "Neurocomunicación"],
-      bio: "Susy Ponce es psicopedagoga, coach transformacional con más de 22 años de experiencia, experta en ayudar a personas y líderes a sanar bloqueos, reprogramar creencias y construir una identidad auténtica que les permita brillar con propósito.",
+      bioShort: "Psicopedagoga y coach transformacional con más de 22 años de experiencia acompañando a personas y líderes.",
+      bio: "Psicopedagoga y coach transformacional con más de 22 años de experiencia acompañando a personas y líderes en procesos profundos de sanación emocional, reprogramación de creencias y construcción de una identidad auténtica. Especialista en PNL, comunicación consciente, liderazgo y poder personal, Susy trabaja desde la raíz: mente, voz interna e identidad. Su enfoque integra desarrollo humano, mentalidad y propósito, ayudando a las personas a liberarse de bloqueos, fortalecer su seguridad personal y liderar con coherencia y autenticidad.",
       image: "/images/mentors/susy.jpg",
       liveDay: "Lunes",
       liveType: "MINDSET",

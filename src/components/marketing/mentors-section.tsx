@@ -1,8 +1,9 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ interface Mentor {
   name: string;
   role: string;
   specialties: string[];
+  bioShort?: string;
   bio: string;
   image: string | null;
   liveDay: string;
@@ -23,6 +25,15 @@ interface MentorsSectionProps {
 }
 
 export function MentorsSection({ mentors }: MentorsSectionProps) {
+  const [expandedMentors, setExpandedMentors] = React.useState<Record<string, boolean>>({});
+
+  const toggleExpanded = (mentorId: string) => {
+    setExpandedMentors(prev => ({
+      ...prev,
+      [mentorId]: !prev[mentorId]
+    }));
+  };
+
   return (
     <section className="section-padding">
       <div className="container-wide">
@@ -47,57 +58,96 @@ export function MentorsSection({ mentors }: MentorsSectionProps) {
 
         {/* Mentors Grid */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {mentors.map((mentor, index) => (
-            <motion.div
-              key={mentor.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
-              viewport={{ once: true }}
-            >
-              <Card hover className="h-full overflow-hidden">
-                {/* Image placeholder */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5 relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-32 h-32 rounded-full bg-surface-2 flex items-center justify-center text-4xl font-bold text-muted-foreground">
-                      {mentor.name.split(" ").map(n => n[0]).join("")}
-                    </div>
-                  </div>
-                  {/* Live day badge */}
-                  {mentor.liveDay && (
-                    <div className="absolute top-4 right-4">
-                      <Badge variant="mentor">
-                        {mentor.liveDay === "Lunes" ? "Lunes Sublimes" : "Miércoles Virales"}
-                      </Badge>
-                    </div>
-                  )}
-                </div>
+          {mentors.map((mentor, index) => {
+            const isExpanded = expandedMentors[mentor.id];
+            const displayBio = isExpanded ? mentor.bio : (mentor.bioShort || mentor.bio);
 
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-1">{mentor.name}</h3>
-                  <p className="text-sm text-primary mb-4">{mentor.role}</p>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                    {mentor.bio}
-                  </p>
-                  {/* Specialties */}
-                  {mentor.specialties.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {mentor.specialties.slice(0, 4).map((specialty) => (
-                        <Badge key={specialty} variant="secondary" className="text-xs">
-                          {specialty}
-                        </Badge>
-                      ))}
+            return (
+              <motion.div
+                key={mentor.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                viewport={{ once: true }}
+              >
+                <Card hover className="h-full overflow-hidden">
+                  {/* Image placeholder */}
+                  <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary/5 relative">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full bg-surface-2 flex items-center justify-center text-4xl font-bold text-muted-foreground">
+                        {mentor.name.split(" ").map(n => n[0]).join("")}
+                      </div>
                     </div>
-                  )}
-                  <Button variant="ghost" className="p-0 h-auto" asChild>
-                    <Link href={`/mentores#${mentor.id}`}>
-                      Ver más <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                    {/* Live day badge */}
+                    {mentor.liveDay && (
+                      <div className="absolute top-4 right-4">
+                        <Badge variant="mentor">
+                          {mentor.liveDay === "Lunes" ? "Lunes Sublimes" : "Miércoles Virales"}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold mb-1">{mentor.name}</h3>
+                    <p className="text-sm text-primary mb-4">{mentor.role}</p>
+
+                    {/* Bio with expand/collapse */}
+                    <div className="mb-4">
+                      <AnimatePresence mode="wait">
+                        <motion.p
+                          key={isExpanded ? "expanded" : "collapsed"}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="text-sm text-muted-foreground"
+                        >
+                          {displayBio}
+                        </motion.p>
+                      </AnimatePresence>
+
+                      {/* Ver más / Ver menos button */}
+                      {mentor.bioShort && mentor.bio !== mentor.bioShort && (
+                        <button
+                          onClick={() => toggleExpanded(mentor.id)}
+                          className="mt-3 w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-border hover:bg-muted/50 transition-colors text-sm text-muted-foreground hover:text-foreground"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="h-4 w-4" />
+                              Ver menos
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-4 w-4" />
+                              Ver más
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Specialties */}
+                    {mentor.specialties.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {mentor.specialties.slice(0, 4).map((specialty) => (
+                          <Badge key={specialty} variant="secondary" className="text-xs">
+                            {specialty}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    <Button variant="ghost" className="p-0 h-auto" asChild>
+                      <Link href={`/mentores#${mentor.id}`}>
+                        Conocer más <ArrowRight className="h-4 w-4 ml-1" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
