@@ -12,9 +12,9 @@ export function HeroSection() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-background">
-        {/* Gradient Glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/10 rounded-full blur-[120px] opacity-60" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
+        {/* Gradient Glow - Responsive sizes */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[300px] h-[300px] md:w-[500px] md:h-[400px] lg:w-[800px] lg:h-[600px] bg-primary/10 rounded-full blur-[80px] md:blur-[100px] lg:blur-[120px] opacity-60" />
+        <div className="absolute bottom-0 right-0 w-[200px] h-[200px] md:w-[300px] md:h-[300px] lg:w-[400px] lg:h-[400px] bg-primary/5 rounded-full blur-[60px] md:blur-[80px] lg:blur-[100px]" />
         {/* Grid Pattern */}
         <div
           className="absolute inset-0 opacity-[0.02]"
