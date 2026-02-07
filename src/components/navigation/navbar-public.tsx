@@ -7,11 +7,12 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Shield, Sun, Moon } from "lucide-react";
+import { Menu, X, Shield, Sun, Moon, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { publicNavItems } from "@/config/navigation";
 import { UserMenu } from "./user-menu";
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 
 export function NavbarPublic() {
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -113,7 +114,10 @@ export function NavbarPublic() {
             {status === "loading" ? (
               <div className="h-9 w-24 rounded-lg bg-surface-2 animate-pulse" />
             ) : isLoggedIn ? (
-              <UserMenu />
+              <>
+                <NotificationDropdown />
+                <UserMenu />
+              </>
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
@@ -126,8 +130,9 @@ export function NavbarPublic() {
             )}
           </div>
 
-          {/* Mobile: Theme Toggle & Menu Button */}
+          {/* Mobile: Notifications, Theme Toggle & Menu Button */}
           <div className="md:hidden flex items-center gap-2">
+            {isLoggedIn && <NotificationDropdown />}
             <Button
               variant="ghost"
               size="icon"
